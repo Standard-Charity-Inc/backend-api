@@ -1,0 +1,38 @@
+on:
+  push:
+    tags:
+      - v**
+
+name: Deploy to EC2 using CodeDeploy
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Run tests
+        run: |
+          npm install
+          npm test
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to EC2 with CodeDeploy
+        id: run-codedeploy
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws deploy create-deployment --application-name prod-standard-charity-backend-api --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name prod-standard-charity-backend-api --github-location=commitId=$IMAGE_TAG,repository=Standard-Charity-Inc/backend-api
