@@ -6,7 +6,7 @@
   "scripts": {
     "tsc": "tsc",
     "lint": "tslint -c tslint.json -p tsconfig.json --fix",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "true",
     "prettier": "pretty-quick",
     "dev": "NODE_ENV=dev ts-node-dev --transpile-only --respawn ./src/app.ts",
     "prod": "tsc && NODE_ENV=prod node ./build/app.js"
