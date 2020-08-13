@@ -14,6 +14,30 @@ Before running the API, take care of the following.
 
 After cloning the repo, run `npm install` in the project's root directory.
 
+### Get an Infura account
+
+You will need an [Infura](https://infura.io/) account for the Infura-related environment variables.
+
+### Create a .env file
+
+In the root directory of the project, create a .env file. Inside that file, add the following:
+
+```
+# dev
+INFURA_PROJECT_ID_DEV={Your Infura project ID for development}
+INFURA_PROJECT_SECRET_DEV={Your Infura project secret for development}
+STANDARD_CHARITY_CONTRACT_ADDRESS_DEV={Ethereum address of contract on Rinkeby testnet}
+
+# prod
+INFURA_PROJECT_ID_PROD={Your Infura project ID for prduction}
+INFURA_PROJECT_SECRET_PROD={Your Infura project secret for prduction}
+STANDARD_CHARITY_CONTRACT_ADDRESS_PROD={Ethereum address of contract on mainnet}
+```
+
+Replace the items in brackets (`{}`), including the brackets themselves. For Infura-related items, create a project in Infura, and get the ID and secret from the `Keys` section in your project's settings.
+
+The values for `dev` and `prod` may be the same.
+
 ## Usage
 
 Once you've completed setup, you're ready to run the API.

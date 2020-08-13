@@ -30,9 +30,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Deploy to EC2 with CodeDeploy
-        id: run-codedeploy
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          aws deploy create-deployment --application-name prod-standard-charity-backend-api --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name prod-standard-charity-backend-api --github-location=commitId=$IMAGE_TAG,repository=Standard-Charity-Inc/backend-api
+      # - name: Deploy to EC2 with CodeDeploy
+      #   id: run-codedeploy
+      #   env:
+      #     IMAGE_TAG: ${{ github.sha }}
+      #   run: |
+      #     aws deploy create-deployment --application-name prod-standard-charity-backend-api --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name prod-standard-charity-backend-api --github-location=commitId=$IMAGE_TAG,repository=Standard-Charity-Inc/backend-api
