@@ -2,11 +2,12 @@ import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 
 import * as bodyParser from 'body-parser';
-import * as express from 'express';
+import express from 'express';
 
 import Config from './config';
 import { setCors } from './middleware';
 import { init as initRedis } from './redis';
+import Infura from './Infura';
 
 const config = Config[Config.env];
 
@@ -22,6 +23,8 @@ app.get('/', (_, res) => {
 });
 
 initRedis().then(() => {
+  new Infura().initializeWebsocket();
+
   app.listen(config.port, () => {
     console.log(
       `Listening in the ${Config.env} environment on port ${config.port}`

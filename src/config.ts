@@ -37,13 +37,13 @@ const config: IConfig = {
   dev: {
     port: 3001,
     infura: {
-      endpoint: `https://mainnet.infura.io/v3/${
+      endpoint: `https://rinkeby.infura.io/v3/${
         process.env.INFURA_PROJECT_ID_DEV as string
       }`,
       projectId: process.env.INFURA_PROJECT_ID_DEV as string,
       projectSecret: process.env.INFURA_PROJECT_SECRET_DEV as string,
       websocket: {
-        url: `wss://mainnet.infura.io/ws/v3/${
+        url: `wss://rinkeby.infura.io/ws/v3/${
           process.env.INFURA_PROJECT_ID_DEV as string
         }`,
       },
@@ -54,7 +54,8 @@ const config: IConfig = {
         abiFilePath: join(
           __dirname,
           'contracts',
-          'StandardCharity_Rinkeby.json'
+          'StandardCharity',
+          'rinkeby.json'
         ),
       },
     },
@@ -79,7 +80,8 @@ const config: IConfig = {
         abiFilePath: join(
           __dirname,
           'contracts',
-          'StandardCharity_Mainnet.json'
+          'StandardCharity',
+          'mainnet.json'
         ),
       },
     },
