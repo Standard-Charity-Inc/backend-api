@@ -1,7 +1,10 @@
 import Web3 from 'web3';
 import { find, map } from 'lodash';
+import superagent from 'superagent';
 
 import Config from '../config';
+import { ContractFunctionName } from '../types';
+import { encodeCallData, decodeFunctionResult } from '../utils/ethereum';
 
 const config = Config[Config.env];
 
@@ -14,6 +17,15 @@ type ContractEvent =
 interface IEventWithTopic {
   event: ContractEvent;
   topic: string;
+}
+
+interface ICallContractFunction {
+  from: string;
+  to: string;
+  data: string;
+  gas?: number;
+  gasPrice?: number;
+  value?: number;
 }
 
 class Infura {
@@ -226,6 +238,66 @@ class Infura {
     setTimeout(() => {
       this.initializeWebsocket();
     }, 2000);
+  };
+
+  public callStandardCharityContract = async (
+    functionName: ContractFunctionName,
+    value: number,
+    inputs: any[]
+  ): Promise<any> => {
+    try {
+      if (!config.ethereum.wallet) {
+        console.log('Could not call Standard Charity contrct. Wallet was null');
+
+        return null;
+      }
+
+      const callData = encodeCallData(
+        this.standardCharityAbi.abi,
+        functionName,
+        inputs
+      );
+
+      if (!callData) {
+        console.log('Call data was null');
+
+        return null;
+      }
+
+      const callObject: ICallContractFunction = {
+        from: config.ethereum.wallet.address,
+        to: config.contracts.standardCharity.address,
+        data: callData,
+      };
+
+      const res = await superagent
+        .post(`${config.infura.endpoint}`)
+        .set({
+          'Content-Type': 'application/json',
+        })
+        .send({
+          jsonrpc: '2.0',
+          method: 'eth_call',
+          params: [callObject, 'latest'],
+          id: Math.floor(Math.random() * Math.floor(9999999)),
+        });
+
+      if (!res || !res.body || !res.body.result) {
+        console.log('Could not get Infura response:', res);
+
+        return null;
+      }
+
+      return decodeFunctionResult(
+        this.standardCharityAbi.abi,
+        functionName,
+        res.body.result
+      );
+    } catch (e) {
+      console.log('readStandardCharityContract error:', e);
+
+      return null;
+    }
   };
 }
 

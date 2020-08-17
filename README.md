@@ -29,11 +29,13 @@ In the root directory of the project, create a .env file. Inside that file, add 
 INFURA_PROJECT_ID_DEV={Your Infura project ID for development}
 INFURA_PROJECT_SECRET_DEV={Your Infura project secret for development}
 STANDARD_CHARITY_CONTRACT_ADDRESS_DEV={Ethereum address of contract on Rinkeby testnet}
+ETH_WALLET_MNEMONIC_DEV={Mnemoic of the wallet that launched the contract on the Rinkeby testnet}
 
 # prod
 INFURA_PROJECT_ID_PROD={Your Infura project ID for prduction}
 INFURA_PROJECT_SECRET_PROD={Your Infura project secret for prduction}
 STANDARD_CHARITY_CONTRACT_ADDRESS_PROD={Ethereum address of contract on mainnet}
+ETH_WALLET_MNEMONIC_PROD={Mnemoic of the wallet that launched the contract on mainnet}
 ```
 
 Replace the items in brackets (`{}`), including the brackets themselves. For Infura-related items, create a project in Infura, and get the ID and secret from the `Keys` section in your project's settings.

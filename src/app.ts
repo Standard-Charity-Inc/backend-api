@@ -6,7 +6,8 @@ import express from 'express';
 
 import Config from './config';
 import { setCors } from './middleware';
-import { init as initRedis } from './redis';
+import Redis from './redis';
+import { init as initRedis } from './redis/instance';
 import Infura from './Infura';
 
 const config = Config[Config.env];
@@ -22,12 +23,35 @@ app.get('/', (_, res) => {
   res.sendStatus(200);
 });
 
-initRedis().then(() => {
-  new Infura().initializeWebsocket();
+const restartApp = (reason: string, timeoutSeconds: number) => {
+  console.log(
+    `The API will restart in ${timeoutSeconds} seconds. Reason: ${reason}`
+  );
 
-  app.listen(config.port, () => {
-    console.log(
-      `Listening in the ${Config.env} environment on port ${config.port}`
+  setTimeout(() => {
+    startApp();
+  }, timeoutSeconds * 1000);
+};
+
+const startApp = () => {
+  if (!config.ethereum.wallet) {
+    return restartApp(
+      'A valid wallet mnemonic was not provdided as an environment variable.',
+      10
     );
+  }
+
+  initRedis().then(async () => {
+    new Infura().initializeWebsocket();
+
+    await new Redis().fillCache();
+
+    app.listen(config.port, () => {
+      console.log(
+        `Listening in the ${Config.env} environment on port ${config.port}`
+      );
+    });
   });
-});
+};
+
+startApp();

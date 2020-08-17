@@ -1,31 +1,54 @@
-import { promisifyAll } from 'bluebird';
-import * as redis from 'redis';
+import { redisClient, setValue } from './instance';
+import Infura from '../Infura';
 
-let redisClient: redis.RedisClient;
+enum RedisKeys {
+  TOTAL_NUM_DONATIONS = 'totalNumDonations',
+  ALL_DONATIONS = 'allDonations',
+}
 
-const init = (): Promise<void> => {
-  return new Promise((resolve) => {
-    const client = redis.createClient();
+class Redis {
+  public fillCache = async (): Promise<void> => {
+    try {
+      await this.flushCache();
 
-    promisifyAll(redis.RedisClient.prototype);
-    promisifyAll(redis.Multi.prototype);
+      const infura = new Infura();
 
-    redisClient = client;
+      const totalNumDonations = await infura.callStandardCharityContract(
+        'getTotalNumDonations',
+        0,
+        []
+      );
 
-    redisClient.on('connect', (err) => {
-      if (err) {
-        return console.log('Error connecting to redis:', err);
-      }
+      await setValue(
+        RedisKeys.TOTAL_NUM_DONATIONS,
+        totalNumDonations && totalNumDonations['0']
+          ? totalNumDonations['0']
+          : '0'
+      );
 
-      console.log('redis connected');
-    });
+      console.log('redis cache created');
+    } catch (e) {
+      console.log('Catch error in fillCache:', e);
+    }
+  };
 
-    redisClient.on('error', (err) => {
-      console.log('redis error:', err);
-    });
+  private flushCache = async (): Promise<void> => {
+    try {
+      return new Promise((resolve) => {
+        redisClient.flushall('ASYNC', (message) => {
+          if (message) {
+            console.log('flushCache message:', message);
+          }
 
-    resolve();
-  });
-};
+          resolve();
+        });
+      });
+    } catch (e) {
+      console.log('Catch error in flushCache:', e);
 
-export { init, redisClient };
+      return;
+    }
+  };
+}
+
+export default Redis;

@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [0.0.4] - 2020-08-16
+
+### Added
+
+- Infura API calls
+- Contract call encoding and decoding
+- Mnemonic to wallet converter
+- Initial work on Redis cache creation
+
 ## [0.0.3] - 2020-08-13
 
 ### Added

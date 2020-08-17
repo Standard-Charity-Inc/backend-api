@@ -1,4 +1,6 @@
 import { join } from 'path';
+import { ethers } from 'ethers';
+import { mnemonicToWallet } from './utils/ethereum';
 
 interface IPlatform {
   port: number;
@@ -15,6 +17,9 @@ interface IPlatform {
       address: string;
       abiFilePath: string;
     };
+  };
+  ethereum: {
+    wallet: ethers.Wallet | null;
   };
 }
 
@@ -59,6 +64,11 @@ const config: IConfig = {
         ),
       },
     },
+    ethereum: {
+      wallet: process.env.ETH_WALLET_MNEMONIC_DEV
+        ? mnemonicToWallet(process.env.ETH_WALLET_MNEMONIC_DEV as string)
+        : null,
+    },
   },
   prod: {
     port: 3002,
@@ -84,6 +94,11 @@ const config: IConfig = {
           'mainnet.json'
         ),
       },
+    },
+    ethereum: {
+      wallet: process.env.ETH_WALLET_MNEMONIC_PROD
+        ? mnemonicToWallet(process.env.ETH_WALLET_MNEUMONIC_PROD as string)
+        : null,
     },
   },
 };
