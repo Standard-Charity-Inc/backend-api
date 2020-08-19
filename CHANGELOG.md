@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [0.0.5] - 2020-08-18
+
+### Added
+
+- Redis cache creation functions
+- Standard Charity contract functions
+- Infura inheritance
+
 ## [0.0.4] - 2020-08-16
 
 ### Added

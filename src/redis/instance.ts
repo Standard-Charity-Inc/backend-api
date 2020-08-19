@@ -1,4 +1,3 @@
-import { promisifyAll } from 'bluebird';
 import * as redis from 'redis';
 
 let redisClient: redis.RedisClient;
@@ -6,9 +5,6 @@ let redisClient: redis.RedisClient;
 const init = (): Promise<void> => {
   return new Promise((resolve) => {
     const client = redis.createClient();
-
-    promisifyAll(redis.RedisClient.prototype);
-    promisifyAll(redis.Multi.prototype);
 
     redisClient = client;
 
@@ -65,8 +61,26 @@ export const setValue = async (key: string, value: string): Promise<void> => {
     });
   } catch (e) {
     console.log('Could not setValue for redis:', e);
+  }
+};
 
-    return;
+export const getValue = async (key: string): Promise<string | null> => {
+  try {
+    return new Promise((resolve) => {
+      redisClient.get(key, (err, value) => {
+        if (err) {
+          console.log('Error while getting value for redis:', err);
+
+          return resolve(null);
+        }
+
+        resolve(value || null);
+      });
+    });
+  } catch (e) {
+    console.log('Could not get value for redis:', e);
+
+    return null;
   }
 };
 

@@ -1,3 +1,5 @@
+import BN from 'bn.js';
+
 export interface IDonation {
   donator: string;
   value: number;
@@ -24,4 +26,20 @@ export type ContractFunctionName =
   | 'getTotalNumExpenditures'
   | 'getTotalNumExpendedDonations'
   | 'getContractBalance'
-  | 'isTextEmpty';
+  | 'isTextEmpty'
+  | 'maxDonation'
+  | 'latestDonation'
+  | 'donations'
+  | 'donationTracker'
+  | 'expenditures'
+  | 'expendedDonations'
+  | 'nextDonationToExpend'
+  | 'totalDonationsETH'
+  | 'totalExpendedETH'
+  | 'totalExpendedUSD';
+
+export interface ISpotlightDonation {
+  donator: string;
+  value: BN;
+  timestamp: number;
+}
