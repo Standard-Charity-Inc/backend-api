@@ -4,6 +4,15 @@
 
 ### Added
 
+- GitHub Actions config
+- More Redis cache creation functions
+- More Standard Charity contract functions
+- TypeScript types
+
+## [0.0.5] - 2020-08-18
+
+### Added
+
 - Redis cache creation functions
 - Standard Charity contract functions
 - Infura inheritance

@@ -28,14 +28,14 @@ export const readLrange = async (
   key: string,
   start: number,
   stop: number
-): Promise<string[] | null> => {
+): Promise<string[]> => {
   try {
     return new Promise((resolve) => {
       redisClient.lrange(key, start, stop, (err, res) => {
         if (err) {
-          console.log('Could not read lrange:', err);
+          console.log('Could not readLrange:', err);
 
-          return resolve(null);
+          return resolve([]);
         }
 
         resolve(res || []);
@@ -44,7 +44,7 @@ export const readLrange = async (
   } catch (e) {
     console.log('readLRange error:', e);
 
-    return null;
+    return [];
   }
 };
 
@@ -81,6 +81,22 @@ export const getValue = async (key: string): Promise<string | null> => {
     console.log('Could not get value for redis:', e);
 
     return null;
+  }
+};
+
+export const lpush = async (key: string, items: string[]): Promise<void> => {
+  try {
+    return new Promise((resolve) => {
+      redisClient.lpush(key, ...items, (err) => {
+        if (err) {
+          console.log('Error in lpush for redis:', err);
+        }
+
+        resolve();
+      });
+    });
+  } catch (e) {
+    console.log('Could not lpush for redis:', e);
   }
 };
 

@@ -1,7 +1,13 @@
 import superagent from 'superagent';
 import Web3 from 'web3';
 
-import { ContractFunctionName, ISpotlightDonation } from '../../types';
+import {
+  ContractFunctionName,
+  ISpotlightDonation,
+  IDonationTrackerItem,
+  IDonation,
+  IExpenditure,
+} from '../../types';
 import { encodeCallData, decodeFunctionResult } from '../../utils/ethereum';
 import Config from '../../config';
 
@@ -289,6 +295,119 @@ class StandardCharityContractFunctions {
       console.log('getTotalExpendedUsd Infura error:', e);
 
       return 0;
+    }
+  };
+
+  public getDonationTracker = async (
+    donationNumber: number
+  ): Promise<IDonationTrackerItem | null> => {
+    try {
+      const donationTracker = await this.callStandardCharityContract(
+        'donationTracker',
+        0,
+        [donationNumber]
+      );
+
+      if (!donationTracker || !donationTracker['0']) {
+        return null;
+      }
+
+      const [addressDonationNum, address] = donationTracker['0'].split('-');
+
+      if (!addressDonationNum || !address) {
+        return null;
+      }
+
+      return {
+        overallDonationNum: donationNumber,
+        addressDonationNum: Number(addressDonationNum),
+        address: `0x${address}`,
+      };
+    } catch (e) {
+      console.log('getDonationTracker Infura error:', e);
+
+      return null;
+    }
+  };
+
+  public getDonation = async (
+    address: string,
+    addressDonationNum: number
+  ): Promise<IDonation | null> => {
+    try {
+      const donation = (await this.callStandardCharityContract('donations', 0, [
+        address,
+        addressDonationNum,
+      ])) as IDonation;
+
+      if (
+        !donation ||
+        !donation.donator ||
+        !donation.value ||
+        !donation.timestamp ||
+        !donation.valueExpendedETH ||
+        !donation.valueExpendedUSD ||
+        !donation.valueRefundedETH ||
+        !donation.donationNumber ||
+        !donation.numExpenditures
+      ) {
+        return null;
+      }
+
+      return {
+        donator: donation.donator,
+        value: donation.value,
+        timestamp: donation.timestamp,
+        valueExpendedETH: donation.valueExpendedETH,
+        valueExpendedUSD: donation.valueExpendedUSD,
+        valueRefundedETH: donation.valueRefundedETH,
+        donationNumber: donation.donationNumber,
+        numExpenditures: donation.numExpenditures,
+      };
+    } catch (e) {
+      console.log('getDonation Infura error:', e);
+
+      return null;
+    }
+  };
+
+  public getExpenditure = async (
+    expenditureNumber: number
+  ): Promise<IExpenditure | null> => {
+    try {
+      const expenditure = (await this.callStandardCharityContract(
+        'donations',
+        0,
+        [expenditureNumber]
+      )) as IExpenditure;
+
+      if (
+        !expenditure ||
+        !expenditure.valueExpendedETH ||
+        !expenditure.valueExpendedUSD ||
+        !expenditure.videoHash ||
+        !expenditure.receiptHash ||
+        !expenditure.timestamp ||
+        !expenditure.numExpendedDonations ||
+        !expenditure.valueExpendedByDonations
+      ) {
+        return null;
+      }
+
+      return {
+        expenditureNumber,
+        valueExpendedETH: expenditure.valueExpendedETH,
+        valueExpendedUSD: expenditure.valueExpendedUSD,
+        videoHash: expenditure.videoHash,
+        receiptHash: expenditure.receiptHash,
+        timestamp: expenditure.timestamp,
+        numExpendedDonations: expenditure.numExpendedDonations,
+        valueExpendedByDonations: expenditure.valueExpendedByDonations,
+      };
+    } catch (e) {
+      console.log('getExpenditure Infura error:', e);
+
+      return null;
     }
   };
 }

@@ -1,9 +1,14 @@
 import Web3 from 'web3';
 import BN from 'bn.js';
 
-import { redisClient, setValue, getValue } from './instance';
+import { redisClient, setValue, getValue, lpush, readLrange } from './instance';
 import Infura from '../Infura';
-import { ISpotlightDonation } from '../types';
+import {
+  ISpotlightDonation,
+  IDonationTrackerItem,
+  IDonation,
+  IExpenditure,
+} from '../types';
 
 enum RedisKeys {
   TOTAL_NUM_DONATIONS = 'totalNumDonations',
@@ -16,7 +21,9 @@ enum RedisKeys {
   TOTAL_DONATIONS_ETH = 'totalDonationsEth',
   TOTAL_EXPENDED_ETH = 'totalExpendedEth',
   TOTAL_EXPENDED_USD = 'totalExpendedUsd',
+  DONATION_TRACKER_ITEMS = 'donationTrackerItems',
   ALL_DONATIONS = 'allDonations',
+  ALL_EXPENDITURES = 'allExpenditures',
 }
 
 class Redis {
@@ -50,6 +57,12 @@ class Redis {
       await this.setTotalExpendedEth();
 
       await this.setTotalExpendedUsd();
+
+      await this.setDonationTrackerItems();
+
+      await this.setAllDonations();
+
+      await this.setAllExpenditures();
 
       console.log('redis cache created');
     } catch (e) {
@@ -365,11 +378,155 @@ class Redis {
     }
   };
 
+  setDonationTrackerItems = async (): Promise<void> => {
+    try {
+      const totalNumDonations = await this.getTotalNumDonations();
+
+      await Promise.all(
+        [...Array(totalNumDonations)].map(async (_, i) => {
+          const donationTrackerItem = await this.infura.getDonationTracker(
+            i + 1
+          );
+
+          if (!donationTrackerItem) {
+            return;
+          }
+
+          await lpush(RedisKeys.DONATION_TRACKER_ITEMS, [
+            JSON.stringify(donationTrackerItem),
+          ]);
+        })
+      );
+    } catch (e) {
+      console.log('setDonationTracker redis error:', e);
+    }
+  };
+
+  getDonationTrackerItems = async (): Promise<IDonationTrackerItem[]> => {
+    try {
+      const donationTrackerItems = await readLrange(
+        RedisKeys.DONATION_TRACKER_ITEMS,
+        0,
+        -1
+      );
+
+      return donationTrackerItems
+        ? donationTrackerItems.map((x) => JSON.parse(x))
+        : [];
+    } catch (e) {
+      console.log('getDonationTrackerItems redis error:', e);
+
+      return [];
+    }
+  };
+
+  setAllDonations = async (): Promise<void> => {
+    try {
+      const donationTrackerItems = await this.getDonationTrackerItems();
+
+      await Promise.all(
+        donationTrackerItems.map(async (item) => {
+          const donation = await this.infura.getDonation(
+            item.address,
+            item.addressDonationNum
+          );
+
+          if (!donation) {
+            return;
+          }
+
+          await lpush(RedisKeys.ALL_DONATIONS, [JSON.stringify(donation)]);
+        })
+      );
+    } catch (e) {
+      console.log('setDonationTracker redis error:', e);
+    }
+  };
+
+  getAllDonations = async (): Promise<IDonation[]> => {
+    try {
+      const donations = await readLrange(RedisKeys.ALL_DONATIONS, 0, -1);
+
+      return donations
+        ? donations.map((x) => {
+            const donation = JSON.parse(x);
+
+            return {
+              donator: donation.donator,
+              value: this.web3.utils.toBN(donation.value),
+              timestamp: Number(donation.timestamp),
+              valueExpendedETH: this.web3.utils.toBN(donation.valueExpendedETH),
+              valueExpendedUSD: Number(donation.valueExpendedUSD),
+              valueRefundedETH: this.web3.utils.toBN(donation.valueRefundedETH),
+              donationNumber: Number(donation.donationNumber),
+              numExpenditures: Number(donation.numExpenditures),
+            };
+          })
+        : [];
+    } catch (e) {
+      console.log('getAllDonations redis error:', e);
+
+      return [];
+    }
+  };
+
+  setAllExpenditures = async (): Promise<void> => {
+    try {
+      const totalNumExpenditures = await this.getTotalNumExpenditures();
+
+      await Promise.all(
+        [...Array(totalNumExpenditures)].map(async (_, i) => {
+          const expenditure = await this.infura.getExpenditure(i + 1);
+
+          if (!expenditure) {
+            return;
+          }
+
+          await lpush(RedisKeys.ALL_EXPENDITURES, [
+            JSON.stringify(expenditure),
+          ]);
+        })
+      );
+    } catch (e) {
+      console.log('setDonationTracker redis error:', e);
+    }
+  };
+
+  getAllExpenditures = async (): Promise<IExpenditure[]> => {
+    try {
+      const expenditures = await readLrange(RedisKeys.ALL_EXPENDITURES, 0, -1);
+
+      return expenditures
+        ? expenditures.map((x) => {
+            const expenditure = JSON.parse(x);
+
+            return {
+              expenditureNumber: Number(expenditure.expenditureNumber),
+              valueExpendedETH: this.web3.utils.toBN(
+                expenditure.valueExpendedETH
+              ),
+              valueExpendedUSD: Number(expenditure.valueExpendedUSD),
+              videoHash: expenditure.videoHash,
+              receiptHash: expenditure.receiptHash,
+              timestamp: Number(expenditure.timestamp),
+              numExpendedDonations: Number(expenditure.numExpendedDonations),
+              valueExpendedByDonations: this.web3.utils.toBN(
+                expenditure.valueExpendedByDonations
+              ),
+            };
+          })
+        : [];
+    } catch (e) {
+      console.log('getAllDonations redis error:', e);
+
+      return [];
+    }
+  };
+
   /**
    * TO DO:
-   * - donationTracker
-   * - all donations
    * - expenditures
+   * - expendedDonations
    * - numDonationsByUser
    */
 }

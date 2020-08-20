@@ -46,6 +46,10 @@ const startApp = () => {
 
     await new Redis().fillCache();
 
+    // const item = await new Redis().getAllExpenditures();
+
+    // console.log('item:', item);
+
     app.listen(config.port, () => {
       console.log(
         `Listening in the ${Config.env} environment on port ${config.port}`
