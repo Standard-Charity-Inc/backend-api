@@ -51,9 +51,23 @@ const startApp = () => {
 
     // console.log('item2:', item2);
 
-    // const item = await new Infura().refundDonation('0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40', 3, new BN('500'))
+    // const item = await new Infura().createExpenditure('1234abc', '5678defg', 50034, new BN('1000000000000000'))
 
     // console.log('item:', item);
+
+    // const item3 = await new Infura().createExpendedDonation(
+    //   '0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40',
+    //   new BN('1000000000000000'),
+    //   100,
+    //   1,
+    //   2
+    // )
+
+    // console.log('item3:', item3);
+
+    // const item4 = await new Infura().setNextDonationToExpend(2);
+
+    // console.log('item4:', item4);
 
     app.listen(config.port, () => {
       console.log(

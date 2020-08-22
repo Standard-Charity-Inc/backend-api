@@ -40,9 +40,7 @@ class StandardCharityContractFunctions {
   public callStandardCharityContract = async (
     functionName: ContractFunctionName,
     value: number,
-    inputs: any[],
-    gas?: number,
-    gasPrice?: number
+    inputs: any[]
   ): Promise<any> => {
     try {
       if (!config.ethereum.wallet) {
@@ -71,14 +69,6 @@ class StandardCharityContractFunctions {
 
       if (value) {
         callObject.value = value;
-      }
-
-      if (gas) {
-        callObject.gas = `0x${Number(gas).toString(16)}`;
-      }
-
-      if (gasPrice) {
-        callObject.gasPrice = `0x${Number(gasPrice).toString(16)}`;
       }
 
       const res = await superagent
@@ -129,8 +119,6 @@ class StandardCharityContractFunctions {
       }
 
       const signedTx = await getSignedTx(callData);
-
-      console.log('signedTx:', signedTx);
 
       if (!signedTx) {
         console.log('Could not get signedTx in sendRawTransaction in Infura');
@@ -462,6 +450,10 @@ class StandardCharityContractFunctions {
     }
   };
 
+  /**
+   *
+   * @param donationNumber Overall donation number, i.e. out of total donations
+   */
   public getDonationTracker = async (
     donationNumber: number
   ): Promise<IDonationTrackerItem | null> => {
@@ -494,6 +486,11 @@ class StandardCharityContractFunctions {
     }
   };
 
+  /**
+   *
+   * @param address Address of the donator
+   * @param addressDonationNum Donation number as it relates to the donator's address, not overall
+   */
   public getDonation = async (
     address: string,
     addressDonationNum: number
@@ -540,7 +537,7 @@ class StandardCharityContractFunctions {
   ): Promise<IExpenditure | null> => {
     try {
       const expenditure = (await this.callStandardCharityContract(
-        'donations',
+        'expenditures',
         0,
         [expenditureNumber]
       )) as IExpenditure;
@@ -611,11 +608,17 @@ class StandardCharityContractFunctions {
     }
   };
 
+  /**
+   *
+   * @param address Address of the donator
+   * @param donationNumber Donation number as it relates to the donator's address, not overall
+   * @param valueETHToRefund denominated in wei
+   */
   public refundDonation = async (
     address: string,
     donationNumber: number,
     valueETHToRefund: BN
-  ): Promise<string | null> => {
+  ): Promise<boolean> => {
     try {
       const refundRes = await this.sendRawTransaction('refundDonation', [
         address,
@@ -623,13 +626,113 @@ class StandardCharityContractFunctions {
         valueETHToRefund.toString(),
       ]);
 
-      console.log('refundDonation Infura res:', refundRes);
+      if (refundRes && refundRes.__length__ === 0) {
+        return true;
+      }
 
-      return null;
+      return false;
     } catch (e) {
       console.log('refundDonation Infura error:', e);
 
-      return 'The donation could not be refunded.';
+      return false;
+    }
+  };
+
+  /**
+   *
+   * @param videoHash The xxHash of the video
+   * @param receiptHash The xxHash of the receipt
+   * @param valueUSD Denominated in cents
+   * @param valueETH Denominated in wei
+   */
+  public createExpenditure = async (
+    videoHash: string,
+    receiptHash: string,
+    valueUSD: number,
+    valueETH: BN
+  ): Promise<boolean> => {
+    try {
+      const createExpenditureRes = await this.sendRawTransaction(
+        'createExpenditure',
+        [videoHash, receiptHash, valueUSD.toString(), valueETH.toString()]
+      );
+
+      if (createExpenditureRes && createExpenditureRes.__length__ === 0) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      console.log('createExpenditure in Infura error:', e);
+
+      return false;
+    }
+  };
+
+  /**
+   *
+   * @param donator Address of the wallet that donated
+   * @param valueExpendedETH Denominated in wei
+   * @param valueExpendedUSD Denominated in cents
+   * @param donationNumber Donation number as it relates to the donator's address, not overall
+   * @param expenditureNumber Overall expenditure number
+   */
+  public createExpendedDonation = async (
+    donator: string,
+    valueExpendedETH: BN,
+    valueExpendedUSD: number,
+    donationNumber: number,
+    expenditureNumber: number
+  ): Promise<boolean> => {
+    try {
+      const createExpendedDonationRes = await this.sendRawTransaction(
+        'createExpendedDonation',
+        [
+          donator,
+          valueExpendedETH.toString(),
+          valueExpendedUSD.toString(),
+          donationNumber,
+          expenditureNumber,
+        ]
+      );
+
+      console.log('createExpendedDonationRes:', createExpendedDonationRes);
+
+      if (
+        createExpendedDonationRes &&
+        createExpendedDonationRes.__length__ === 0
+      ) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      console.log('createExpendedDonation in Infura error:', e);
+
+      return false;
+    }
+  };
+
+  /**
+   *
+   * @param nextDonationToExpend Donations are chronological, so increment as needed
+   */
+  public setNextDonationToExpend = async (
+    nextDonationToExpend: number
+  ): Promise<boolean> => {
+    try {
+      const setNextDonationToExpendRes = await this.sendRawTransaction(
+        'setNextDonationToExpend',
+        [nextDonationToExpend]
+      );
+
+      console.log('setNextDonationToExpendRes:', setNextDonationToExpendRes);
+
+      return true;
+    } catch (e) {
+      console.log('setNextDonationToExpend in Inufra error:', e);
+
+      return false;
     }
   };
 }

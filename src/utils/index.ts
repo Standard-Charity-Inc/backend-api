@@ -42,8 +42,6 @@ export const getSignedTx = async (
       data
     );
 
-    console.log('gasEstimate:', gasEstimate);
-
     if (!gasEstimate) {
       console.log('Could not get gas estimate in utils');
 

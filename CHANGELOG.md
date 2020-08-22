@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.0.8] - 2020-08-22
+
+### Added
+
+- Documentation within the API itself
+- More contract functions
+
 ## [0.0.7] - 2020-08-22
 
 ### Added

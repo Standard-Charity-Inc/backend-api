@@ -483,6 +483,8 @@ class Redis {
           const expenditure = await this.infura.getExpenditure(i + 1);
 
           if (!expenditure) {
+            console.log('Could not get expenditure');
+
             return;
           }
 
