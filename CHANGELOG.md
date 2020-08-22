@@ -1,6 +1,13 @@
 # CHANGELOG
 
-## [0.0.5] - 2020-08-18
+## [0.0.7] - 2020-08-22
+
+### Added
+
+- Signed ETH transaction functionality
+- More contract functions
+
+## [0.0.6] - 2020-08-20
 
 ### Added
 

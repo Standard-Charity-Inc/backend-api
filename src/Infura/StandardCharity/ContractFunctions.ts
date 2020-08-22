@@ -1,5 +1,6 @@
 import superagent from 'superagent';
 import Web3 from 'web3';
+import BN from 'bn.js';
 
 import {
   ContractFunctionName,
@@ -7,8 +8,10 @@ import {
   IDonationTrackerItem,
   IDonation,
   IExpenditure,
+  IExpendedDonation,
 } from '../../types';
 import { encodeCallData, decodeFunctionResult } from '../../utils/ethereum';
+import { getSignedTx } from '../../utils';
 import Config from '../../config';
 
 const config = Config[Config.env];
@@ -17,8 +20,8 @@ interface ICallContractFunction {
   from: string;
   to: string;
   data: string;
-  gas?: number;
-  gasPrice?: number;
+  gas?: string;
+  gasPrice?: string;
   value?: number;
 }
 
@@ -37,7 +40,9 @@ class StandardCharityContractFunctions {
   public callStandardCharityContract = async (
     functionName: ContractFunctionName,
     value: number,
-    inputs: any[]
+    inputs: any[],
+    gas?: number,
+    gasPrice?: number
   ): Promise<any> => {
     try {
       if (!config.ethereum.wallet) {
@@ -68,6 +73,14 @@ class StandardCharityContractFunctions {
         callObject.value = value;
       }
 
+      if (gas) {
+        callObject.gas = `0x${Number(gas).toString(16)}`;
+      }
+
+      if (gasPrice) {
+        callObject.gasPrice = `0x${Number(gasPrice).toString(16)}`;
+      }
+
       const res = await superagent
         .post(`${config.infura.endpoint}`)
         .set({
@@ -93,6 +106,157 @@ class StandardCharityContractFunctions {
       );
     } catch (e) {
       console.log('readStandardCharityContract error:', e);
+
+      return null;
+    }
+  };
+
+  public sendRawTransaction = async (
+    functionName: ContractFunctionName,
+    inputs: any[]
+  ): Promise<any> => {
+    try {
+      const callData = encodeCallData(
+        this.standardCharityAbi.abi,
+        functionName,
+        inputs
+      );
+
+      if (!callData) {
+        console.log('Could not get callData in sendRawTransaction in Infura');
+
+        return null;
+      }
+
+      const signedTx = await getSignedTx(callData);
+
+      console.log('signedTx:', signedTx);
+
+      if (!signedTx) {
+        console.log('Could not get signedTx in sendRawTransaction in Infura');
+
+        return null;
+      }
+
+      const res = await superagent
+        .post(`${config.infura.endpoint}`)
+        .set({
+          'Content-Type': 'application/json',
+        })
+        .send({
+          jsonrpc: '2.0',
+          method: 'eth_sendRawTransaction',
+          params: [signedTx],
+          id: Math.floor(Math.random() * Math.floor(9999999)),
+        });
+
+      if (!res || !res.body || !res.body.result) {
+        console.log('Could not get result in sendRawTransaction in Infura');
+
+        return null;
+      }
+
+      return decodeFunctionResult(
+        this.standardCharityAbi.abi,
+        functionName,
+        res.body.result
+      );
+    } catch (e) {
+      console.log('sendRawTransaction Infura error:', e);
+
+      return null;
+    }
+  };
+
+  public getTransactionCount = async (
+    address: string
+  ): Promise<number | null> => {
+    try {
+      const res = await superagent
+        .post(`${config.infura.endpoint}`)
+        .set({
+          'Content-Type': 'application/json',
+        })
+        .send({
+          jsonrpc: '2.0',
+          method: 'eth_getTransactionCount',
+          params: [address, 'latest'],
+          id: Math.floor(Math.random() * Math.floor(9999999)),
+        });
+
+      if (res && res.body && res.body.result) {
+        return parseInt(res.body.result, 16);
+      }
+
+      return null;
+    } catch (e) {
+      console.log('getTransactionCount in Infura error:', e);
+
+      return null;
+    }
+  };
+
+  public getGasPrice = async (): Promise<number | null> => {
+    try {
+      const res = await superagent
+        .post(`${config.infura.endpoint}`)
+        .set({
+          'Content-Type': 'application/json',
+        })
+        .send({
+          jsonrpc: '2.0',
+          method: 'eth_gasPrice',
+          params: [],
+          id: Math.floor(Math.random() * Math.floor(9999999)),
+        });
+
+      if (res && res.body && res.body.result) {
+        return parseInt(res.body.result, 16);
+      }
+
+      return null;
+    } catch (e) {
+      console.log('getGasPrice Infura error:', e);
+
+      return null;
+    }
+  };
+
+  public estimateGas = async (
+    from: string,
+    to: string,
+    gasPrice: number,
+    value: number,
+    data: string
+  ): Promise<number | null> => {
+    try {
+      const res = await superagent
+        .post(`${config.infura.endpoint}`)
+        .set({
+          'Content-Type': 'application/json',
+        })
+        .send({
+          jsonrpc: '2.0',
+          method: 'eth_estimateGas',
+          params: [
+            {
+              from,
+              to,
+              gasPrice: `0x${Number(gasPrice).toString(16)}`,
+              value: `0x${Number(value).toString(16)}`,
+              data,
+            },
+          ],
+          id: Math.floor(Math.random() * Math.floor(9999999)),
+        });
+
+      if (res && res.body && res.body.result) {
+        return parseInt(res.body.result, 16);
+      }
+
+      return null;
+    } catch (e) {
+      console.log('estimateGas error in Infura:', e);
 
       return null;
     }
@@ -408,6 +572,64 @@ class StandardCharityContractFunctions {
       console.log('getExpenditure Infura error:', e);
 
       return null;
+    }
+  };
+
+  public getExpendedDonation = async (
+    expendedDonationNumber: number
+  ): Promise<IExpendedDonation | null> => {
+    try {
+      const expendedDonation = (await this.callStandardCharityContract(
+        'expendedDonations',
+        0,
+        [expendedDonationNumber]
+      )) as IExpendedDonation;
+
+      if (
+        !expendedDonation ||
+        !expendedDonation.donator ||
+        !expendedDonation.valueExpendedETH ||
+        !expendedDonation.valueExpendedUSD ||
+        !expendedDonation.expenditureNumber ||
+        !expendedDonation.donationNumber
+      ) {
+        return null;
+      }
+
+      return {
+        expendedDonationNumber,
+        donator: expendedDonation.donator,
+        valueExpendedETH: expendedDonation.valueExpendedETH,
+        valueExpendedUSD: expendedDonation.valueExpendedUSD,
+        expenditureNumber: expendedDonation.expenditureNumber,
+        donationNumber: expendedDonation.donationNumber,
+      };
+    } catch (e) {
+      console.log('getExpendedDonation Infura error:', e);
+
+      return null;
+    }
+  };
+
+  public refundDonation = async (
+    address: string,
+    donationNumber: number,
+    valueETHToRefund: BN
+  ): Promise<string | null> => {
+    try {
+      const refundRes = await this.sendRawTransaction('refundDonation', [
+        address,
+        donationNumber,
+        valueETHToRefund.toString(),
+      ]);
+
+      console.log('refundDonation Infura res:', refundRes);
+
+      return null;
+    } catch (e) {
+      console.log('refundDonation Infura error:', e);
+
+      return 'The donation could not be refunded.';
     }
   };
 }

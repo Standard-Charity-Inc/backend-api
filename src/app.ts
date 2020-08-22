@@ -9,6 +9,7 @@ import { setCors } from './middleware';
 import Redis from './redis';
 import { init as initRedis } from './redis/instance';
 import Infura from './Infura';
+import BN from 'bn.js';
 
 const config = Config[Config.env];
 
@@ -46,7 +47,11 @@ const startApp = () => {
 
     await new Redis().fillCache();
 
-    // const item = await new Redis().getAllExpenditures();
+    // const item2 = await new Redis().getAllDonations();
+
+    // console.log('item2:', item2);
+
+    // const item = await new Infura().refundDonation('0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40', 3, new BN('500'))
 
     // console.log('item:', item);
 

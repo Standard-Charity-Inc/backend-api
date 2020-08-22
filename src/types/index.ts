@@ -61,3 +61,12 @@ export interface IExpenditure {
   numExpendedDonations: number;
   valueExpendedByDonations: BN;
 }
+
+export interface IExpendedDonation {
+  expendedDonationNumber: number;
+  donator: string;
+  valueExpendedETH: BN;
+  valueExpendedUSD: number;
+  expenditureNumber: number;
+  donationNumber: number;
+}

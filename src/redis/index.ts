@@ -8,6 +8,7 @@ import {
   IDonationTrackerItem,
   IDonation,
   IExpenditure,
+  IExpendedDonation,
 } from '../types';
 
 enum RedisKeys {
@@ -24,6 +25,7 @@ enum RedisKeys {
   DONATION_TRACKER_ITEMS = 'donationTrackerItems',
   ALL_DONATIONS = 'allDonations',
   ALL_EXPENDITURES = 'allExpenditures',
+  ALL_EXPENDED_DONATIONS = 'allExpendedDonations',
 }
 
 class Redis {
@@ -63,6 +65,8 @@ class Redis {
       await this.setAllDonations();
 
       await this.setAllExpenditures();
+
+      await this.setAllExpendedDonations();
 
       console.log('redis cache created');
     } catch (e) {
@@ -523,12 +527,60 @@ class Redis {
     }
   };
 
-  /**
-   * TO DO:
-   * - expenditures
-   * - expendedDonations
-   * - numDonationsByUser
-   */
+  setAllExpendedDonations = async (): Promise<void> => {
+    try {
+      const totalNumExpendedDonations = await this.getTotalNumExpendedDonations();
+
+      await Promise.all(
+        [...Array(totalNumExpendedDonations)].map(async (_, i) => {
+          const expendedDonation = await this.infura.getExpendedDonation(i + 1);
+
+          if (!expendedDonation) {
+            return;
+          }
+
+          await lpush(RedisKeys.ALL_EXPENDED_DONATIONS, [
+            JSON.stringify(expendedDonation),
+          ]);
+        })
+      );
+    } catch (e) {
+      console.log('setDonationTracker redis error:', e);
+    }
+  };
+
+  getAllExpendedDonations = async (): Promise<IExpendedDonation[]> => {
+    try {
+      const expendedDonations = await readLrange(
+        RedisKeys.ALL_EXPENDED_DONATIONS,
+        0,
+        -1
+      );
+
+      return expendedDonations
+        ? expendedDonations.map((x) => {
+            const expendedDonation = JSON.parse(x);
+
+            return {
+              expendedDonationNumber: Number(
+                expendedDonation.expendedDonationNumber
+              ),
+              donator: expendedDonation.donator,
+              valueExpendedETH: this.web3.utils.toBN(
+                expendedDonation.valueExpendedETH
+              ),
+              valueExpendedUSD: Number(expendedDonation.valueExpendedUSD),
+              expenditureNumber: Number(expendedDonation.expenditureNumber),
+              donationNumber: Number(expendedDonation.donationNumber),
+            };
+          })
+        : [];
+    } catch (e) {
+      console.log('getAllExpendedDonations redis error:', e);
+
+      return [];
+    }
+  };
 }
 
 export default Redis;
