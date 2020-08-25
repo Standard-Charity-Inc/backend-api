@@ -1,7 +1,15 @@
+import validator from 'validator';
+
 import Config from '../config';
 import Infura from '../Infura';
 
 const config = Config[Config.env];
+
+export interface IPage {
+  start: number;
+  end: number;
+  error?: string;
+}
 
 export const getSignedTx = async (
   data: string,
@@ -93,5 +101,42 @@ export const numPlatesToFloating = (numPlates: string): number => {
     console.log('numPlatesToFloating error:', e);
 
     return 0;
+  }
+};
+
+export const getPageStartEnd = (page: any, pageSize: any): IPage => {
+  try {
+    if (!page || !validator.isInt(page.toString())) {
+      return {
+        start: 0,
+        end: 0,
+        error: 'The page paramater must be provided as an integer',
+      };
+    }
+
+    if (!pageSize || !validator.isInt(pageSize.toString())) {
+      return {
+        start: 0,
+        end: 0,
+        error: 'The pageSize paramater must be provided as an integer',
+      };
+    }
+
+    const size = Number(pageSize) < 100 ? Number(pageSize) : 100;
+
+    const start = (Number(page) - 1) * size;
+
+    const end = Number(page) * size - 1;
+
+    return {
+      start,
+      end,
+    };
+  } catch (e) {
+    return {
+      start: 0,
+      end: 0,
+      error: 'Could not get determine which page of data to return',
+    };
   }
 };

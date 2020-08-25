@@ -1,5 +1,3 @@
-import BN from 'bn.js';
-
 export type ContractFunctionName =
   | 'donate'
   | 'createExpenditure'
@@ -29,7 +27,7 @@ export type ContractFunctionName =
 
 export interface ISpotlightDonation {
   donator: string;
-  value: BN;
+  value: string;
   timestamp: number;
 }
 
@@ -41,11 +39,11 @@ export interface IDonationTrackerItem {
 
 export interface IDonation {
   donator: string;
-  value: BN;
+  value: string;
   timestamp: number;
-  valueExpendedETH: BN;
+  valueExpendedETH: string;
   valueExpendedUSD: number;
-  valueRefundedETH: BN;
+  valueRefundedETH: string;
   donationNumber: number;
   // mapping (uint256 => uint256) expendedDonationIDs;
   numExpenditures: number;
@@ -53,21 +51,21 @@ export interface IDonation {
 
 export interface IExpenditure {
   expenditureNumber: number;
-  valueExpendedETH: BN;
+  valueExpendedETH: string;
   valueExpendedUSD: number;
   videoHash: string;
   receiptHash: string;
   timestamp: number;
   // mapping (uint256 => uint256) expendedDonationIDs;
   numExpendedDonations: number;
-  valueExpendedByDonations: BN;
+  valueExpendedByDonations: string;
   platesDeployed: number;
 }
 
 export interface IExpendedDonation {
   expendedDonationNumber: number;
   donator: string;
-  valueExpendedETH: BN;
+  valueExpendedETH: string;
   valueExpendedUSD: number;
   expenditureNumber: number;
   donationNumber: number;

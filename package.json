@@ -1,6 +1,6 @@
 {
   "name": "backend-api",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Backend API resources for Standard Charity",
   "main": "build/app.js",
   "scripts": {
@@ -33,6 +33,7 @@
     "lodash": "^4.17.20",
     "redis": "^3.0.2",
     "superagent": "^6.0.0",
+    "validator": "^13.1.1",
     "web3": "^1.2.11"
   },
   "devDependencies": {
@@ -42,6 +43,7 @@
     "@types/node": "^14.0.27",
     "@types/redis": "^2.8.25",
     "@types/superagent": "^4.1.9",
+    "@types/validator": "^13.1.0",
     "prettier": "^2.0.5",
     "pretty-quick": "^2.0.1",
     "ts-node-dev": "^1.0.0-pre.56",

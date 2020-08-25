@@ -11,9 +11,9 @@ interface IError {
 }
 
 class StandardRoute {
-  private req: Request;
-  private res: Response;
-  private next: NextFunction;
+  public req: Request;
+  public res: Response;
+  public next: NextFunction;
 
   constructor(req: Request, res: Response, next: NextFunction) {
     this.req = req;

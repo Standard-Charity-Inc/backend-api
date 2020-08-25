@@ -1,5 +1,4 @@
 import Web3 from 'web3';
-import BN from 'bn.js';
 
 import { redisClient, setValue, getValue, lpush, readLrange } from './instance';
 import Infura from '../Infura';
@@ -215,19 +214,17 @@ class Redis {
     }
   };
 
-  getStandardCharityContractBalance = async (): Promise<BN> => {
+  getStandardCharityContractBalance = async (): Promise<string> => {
     try {
       const contractBalance = await getValue(
         RedisKeys.STANDARD_CHARITY_CONTRACT_BALANCE
       );
 
-      return contractBalance
-        ? this.web3.utils.toBN(contractBalance)
-        : this.web3.utils.toBN(0);
+      return contractBalance || '0';
     } catch (e) {
       console.log('getStandardCharityContractBalance redis error:', e);
 
-      return this.web3.utils.toBN(0);
+      return '0';
     }
   };
 
@@ -257,7 +254,7 @@ class Redis {
 
       return {
         donator: parsed.donator,
-        value: this.web3.utils.toBN(parsed.value),
+        value: parsed.value,
         timestamp: Number(parsed.timestamp),
       };
     } catch (e) {
@@ -293,7 +290,7 @@ class Redis {
 
       return {
         donator: parsed.donator,
-        value: this.web3.utils.toBN(parsed.value),
+        value: parsed.value,
         timestamp: Number(parsed.timestamp),
       };
     } catch (e) {
@@ -347,17 +344,15 @@ class Redis {
     }
   };
 
-  getTotalDonationsEth = async (): Promise<BN> => {
+  getTotalDonationsEth = async (): Promise<string> => {
     try {
       const totalDonationsEth = await getValue(RedisKeys.TOTAL_DONATIONS_ETH);
 
-      return totalDonationsEth
-        ? this.web3.utils.toBN(totalDonationsEth)
-        : this.web3.utils.toBN(0);
+      return totalDonationsEth || '0';
     } catch (e) {
       console.log('getTotalDonationsEth redis error:', e);
 
-      return this.web3.utils.toBN(0);
+      return '0';
     }
   };
 
@@ -374,17 +369,15 @@ class Redis {
     }
   };
 
-  getTotalExpendedEth = async (): Promise<BN> => {
+  getTotalExpendedEth = async (): Promise<string> => {
     try {
       const totalExpendedEth = await getValue(RedisKeys.TOTAL_EXPENDED_ETH);
 
-      return totalExpendedEth
-        ? this.web3.utils.toBN(totalExpendedEth)
-        : this.web3.utils.toBN(0);
+      return totalExpendedEth || '0';
     } catch (e) {
       console.log('getTotalExpendedEth redis error:', e);
 
-      return this.web3.utils.toBN(0);
+      return '0';
     }
   };
 
@@ -488,11 +481,11 @@ class Redis {
 
             return {
               donator: donation.donator,
-              value: this.web3.utils.toBN(donation.value),
+              value: donation.value,
               timestamp: Number(donation.timestamp),
-              valueExpendedETH: this.web3.utils.toBN(donation.valueExpendedETH),
+              valueExpendedETH: donation.valueExpendedETH,
               valueExpendedUSD: Number(donation.valueExpendedUSD),
-              valueRefundedETH: this.web3.utils.toBN(donation.valueRefundedETH),
+              valueRefundedETH: donation.valueRefundedETH,
               donationNumber: Number(donation.donationNumber),
               numExpenditures: Number(donation.numExpenditures),
             };
@@ -539,17 +532,13 @@ class Redis {
 
             return {
               expenditureNumber: Number(expenditure.expenditureNumber),
-              valueExpendedETH: this.web3.utils.toBN(
-                expenditure.valueExpendedETH
-              ),
+              valueExpendedETH: expenditure.valueExpendedETH,
               valueExpendedUSD: Number(expenditure.valueExpendedUSD),
               videoHash: expenditure.videoHash,
               receiptHash: expenditure.receiptHash,
               timestamp: Number(expenditure.timestamp),
               numExpendedDonations: Number(expenditure.numExpendedDonations),
-              valueExpendedByDonations: this.web3.utils.toBN(
-                expenditure.valueExpendedByDonations
-              ),
+              valueExpendedByDonations: expenditure.valueExpendedByDonations,
               platesDeployed: numPlatesToFloating(expenditure.platesDeployed),
             };
           })
@@ -600,9 +589,7 @@ class Redis {
                 expendedDonation.expendedDonationNumber
               ),
               donator: expendedDonation.donator,
-              valueExpendedETH: this.web3.utils.toBN(
-                expendedDonation.valueExpendedETH
-              ),
+              valueExpendedETH: expendedDonation.valueExpendedETH,
               valueExpendedUSD: Number(expendedDonation.valueExpendedUSD),
               expenditureNumber: Number(expendedDonation.expenditureNumber),
               donationNumber: Number(expendedDonation.donationNumber),

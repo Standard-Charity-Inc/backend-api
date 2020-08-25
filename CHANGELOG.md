@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.0.10] - 2020-08-25
+
+### Added
+
+- Donations endpoints
+- Documentation
+
 ## [0.0.9] - 2020-08-24
 
 ### Added

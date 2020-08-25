@@ -8,6 +8,8 @@ This Node.js/Express API, written in Typescript, is the primary backend package 
 
 You'll need [Node.js](https://nodejs.org/en/download/) installed.
 
+You'll also need [Redis](https://redis.io/) installed, and an instance of Redis server running.
+
 - [Setup](#setup)
   - [Install dependencies](#install-dependencies)
   - [Get an Infura account](#get-an-infura-account)
@@ -17,7 +19,11 @@ You'll need [Node.js](https://nodejs.org/en/download/) installed.
   - [Production mode](#production-mode)
 - [Endpoints](#endpoints)
   - [Donations](#donations)
+    - [Get donations](#get-donations)
     - [Get maximum donation](#get-maximum-donation)
+    - [Get latest donation](#get-latest-donation)
+    - [Get total ETH donations](#get-total-eth-donations)
+    - [Get total number of donations](#get-total-number-of-donations)
 
 ## Setup
 
@@ -107,6 +113,87 @@ interface IError {
 
 Endpoints related to donations
 
+## Get donations
+
+Returns json array of donations
+
+- **URL**
+
+  /donations/all
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  `page: Int`
+  `pageSize: Int` Maximum of 100
+
+  **Optional:**
+
+  `address: Int` ETH wallet address
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    If a latest donation exists:
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "donations": [
+            {
+              "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
+              "value": "200000000000000000", // in wei
+              "timestamp": 1598317668,
+              "valueExpendedETH": "0", // in wei
+              "valueExpendedUSD": 0, // in cents
+              "valueRefundedETH": "0", // in wei
+              "donationNumber": 1, // for this address
+              "numExpenditures": 0
+            }
+          ],
+          "total": 1 // count of donations, ignoring page and pageSize
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching donations',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(
+    `${BASE_URL}/donations/all?page=1&pageSize=50`
+  );
+  ```
+
 ## Get maximum donation
 
 Returns json data about the contract's top donation, if any donations exist at all
@@ -179,4 +266,200 @@ Returns json data about the contract's top donation, if any donations exist at a
 
   ```javascript
   const res = await superagent.get(`${BASE_URL}/donations/max`);
+  ```
+
+## Get latest donation
+
+Returns json data about the contract's most recent donation, if any donations exist at all
+
+- **URL**
+
+  /donations/latest
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    If a latest donation exists:
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
+          "value": "2c68af0bb140000",
+          "timestamp": 1598317668
+        },
+        "error": null
+      }
+    ```
+
+    If a latest donation does not exist, i.e. there are no donations at all:
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": null,
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching the latest donation',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/donations/latest`);
+  ```
+
+## Get total ETH donations
+
+Returns json data about the contract's overall value of donations received denomiated in wei
+
+- **URL**
+
+  /donations/totalEth
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "totalDonationsEth": "200000000000000000" // in wei
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching total donations denominated in ETH',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/donations/totalEth`);
+  ```
+
+## Get total number of donations
+
+Returns json data about the total count of donations to the contract
+
+- **URL**
+
+  /donations/totalNumber
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    If a latest donation exists:
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "totalNumDonations": 1
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching the total number of donations',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/donations/totalNumber`);
   ```
