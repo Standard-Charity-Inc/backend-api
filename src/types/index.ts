@@ -24,7 +24,8 @@ export type ContractFunctionName =
   | 'nextDonationToExpend'
   | 'totalDonationsETH'
   | 'totalExpendedETH'
-  | 'totalExpendedUSD';
+  | 'totalExpendedUSD'
+  | 'totalPlatesDeployed';
 
 export interface ISpotlightDonation {
   donator: string;
@@ -60,6 +61,7 @@ export interface IExpenditure {
   // mapping (uint256 => uint256) expendedDonationIDs;
   numExpendedDonations: number;
   valueExpendedByDonations: BN;
+  platesDeployed: number;
 }
 
 export interface IExpendedDonation {
@@ -69,4 +71,5 @@ export interface IExpendedDonation {
   valueExpendedUSD: number;
   expenditureNumber: number;
   donationNumber: number;
+  platesDeployed: number;
 }

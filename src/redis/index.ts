@@ -10,11 +10,13 @@ import {
   IExpenditure,
   IExpendedDonation,
 } from '../types';
+import { numPlatesToFloating } from '../utils';
 
 enum RedisKeys {
   TOTAL_NUM_DONATIONS = 'totalNumDonations',
   TOTAL_NUM_EXPENDITURES = 'totalNumExpenditures',
   TOTAL_NUM_EXPENDED_DONATIONS = 'totalNumExpendedDonations',
+  TOTAL_PLATES_DEPLOYED = 'totalPlatesDeployed',
   STANDARD_CHARITY_CONTRACT_BALANCE = 'standardCharityContractBalance',
   MAX_DONATION = 'maxDonation',
   LATEST_DONATION = 'latestDonation',
@@ -45,6 +47,8 @@ class Redis {
       await this.setTotalNumDonations();
 
       await this.setTotalNumExpenditures();
+
+      await this.setTotalPlatesDeployed();
 
       await this.setStandardCharityContractBalance();
 
@@ -166,6 +170,33 @@ class Redis {
       return totalNumExpendedDonations ? Number(totalNumExpendedDonations) : 0;
     } catch (e) {
       console.log('getTotalNumExpenditures redis error:', e);
+
+      return 0;
+    }
+  };
+
+  setTotalPlatesDeployed = async (): Promise<void> => {
+    try {
+      const totalPlatesDeployed = await this.infura.getTotalPlatesDeployed();
+
+      await setValue(
+        RedisKeys.TOTAL_PLATES_DEPLOYED,
+        numPlatesToFloating(totalPlatesDeployed).toString()
+      );
+    } catch (e) {
+      console.log('setTotalPlatesDeployed redis error:', e);
+    }
+  };
+
+  getTotalPlatesDeployed = async (): Promise<number> => {
+    try {
+      const totalPlatesDeployed = await getValue(
+        RedisKeys.TOTAL_PLATES_DEPLOYED
+      );
+
+      return totalPlatesDeployed ? Number(totalPlatesDeployed) : 0;
+    } catch (e) {
+      console.log('getTotalPlatesDeployed redis error:', e);
 
       return 0;
     }
@@ -519,6 +550,7 @@ class Redis {
               valueExpendedByDonations: this.web3.utils.toBN(
                 expenditure.valueExpendedByDonations
               ),
+              platesDeployed: numPlatesToFloating(expenditure.platesDeployed),
             };
           })
         : [];
@@ -574,6 +606,7 @@ class Redis {
               valueExpendedUSD: Number(expendedDonation.valueExpendedUSD),
               expenditureNumber: Number(expendedDonation.expenditureNumber),
               donationNumber: Number(expendedDonation.donationNumber),
+              platesDeployed: expendedDonation.platesDeployed,
             };
           })
         : [];

@@ -322,6 +322,24 @@ class StandardCharityContractFunctions {
     }
   };
 
+  public getTotalPlatesDeployed = async (): Promise<string> => {
+    try {
+      const totalPlatesDeployed = await this.callStandardCharityContract(
+        'totalPlatesDeployed',
+        0,
+        []
+      );
+
+      return totalPlatesDeployed && totalPlatesDeployed['0']
+        ? totalPlatesDeployed['0']
+        : '0';
+    } catch (e) {
+      console.log('getTotalPlatesDeployed in Infura error:', e);
+
+      return '0';
+    }
+  };
+
   public getMaxDonation = async (): Promise<ISpotlightDonation | null> => {
     try {
       const maxDonation = await this.callStandardCharityContract(
@@ -550,7 +568,8 @@ class StandardCharityContractFunctions {
         !expenditure.receiptHash ||
         !expenditure.timestamp ||
         !expenditure.numExpendedDonations ||
-        !expenditure.valueExpendedByDonations
+        !expenditure.valueExpendedByDonations ||
+        !expenditure.platesDeployed
       ) {
         return null;
       }
@@ -564,6 +583,7 @@ class StandardCharityContractFunctions {
         timestamp: expenditure.timestamp,
         numExpendedDonations: expenditure.numExpendedDonations,
         valueExpendedByDonations: expenditure.valueExpendedByDonations,
+        platesDeployed: expenditure.platesDeployed,
       };
     } catch (e) {
       console.log('getExpenditure Infura error:', e);
@@ -588,7 +608,8 @@ class StandardCharityContractFunctions {
         !expendedDonation.valueExpendedETH ||
         !expendedDonation.valueExpendedUSD ||
         !expendedDonation.expenditureNumber ||
-        !expendedDonation.donationNumber
+        !expendedDonation.donationNumber ||
+        !expendedDonation.platesDeployed
       ) {
         return null;
       }
@@ -600,6 +621,7 @@ class StandardCharityContractFunctions {
         valueExpendedUSD: expendedDonation.valueExpendedUSD,
         expenditureNumber: expendedDonation.expenditureNumber,
         donationNumber: expendedDonation.donationNumber,
+        platesDeployed: expendedDonation.platesDeployed,
       };
     } catch (e) {
       console.log('getExpendedDonation Infura error:', e);

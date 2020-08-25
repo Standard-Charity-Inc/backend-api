@@ -67,3 +67,31 @@ export const getSignedTx = async (
     return null;
   }
 };
+
+export const numPlatesToFloating = (numPlates: string): number => {
+  try {
+    if (!numPlates) {
+      return 0;
+    }
+
+    const numPlatesNum = Number(numPlates);
+
+    if (isNaN(numPlatesNum)) {
+      return 0;
+    }
+
+    const floating = Number(
+      (Math.round((numPlatesNum / 10) * 10) / 10).toFixed(1)
+    );
+
+    if (isNaN(floating)) {
+      return 0;
+    }
+
+    return floating;
+  } catch (e) {
+    console.log('numPlatesToFloating error:', e);
+
+    return 0;
+  }
+};

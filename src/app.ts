@@ -10,6 +10,7 @@ import Redis from './redis';
 import { init as initRedis } from './redis/instance';
 import Infura from './Infura';
 import BN from 'bn.js';
+import { donations } from './routes/Donations';
 
 const config = Config[Config.env];
 
@@ -23,6 +24,8 @@ app.use(setCors);
 app.get('/', (_, res) => {
   res.sendStatus(200);
 });
+
+app.use('/donations', donations);
 
 const restartApp = (reason: string, timeoutSeconds: number) => {
   console.log(
@@ -47,7 +50,7 @@ const startApp = () => {
 
     await new Redis().fillCache();
 
-    // const item2 = await new Redis().getAllDonations();
+    // const item2 = await new Redis().getTotalPlatesDeployed();
 
     // console.log('item2:', item2);
 

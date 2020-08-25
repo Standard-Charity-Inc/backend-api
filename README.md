@@ -8,11 +8,22 @@ This Node.js/Express API, written in Typescript, is the primary backend package 
 
 You'll need [Node.js](https://nodejs.org/en/download/) installed.
 
+- [Setup](#setup)
+  - [Install dependencies](#install-dependencies)
+  - [Get an Infura account](#get-an-infura-account)
+  - [Create a .env file](#create-a-.env-file)
+- [Usage](#usage)
+  - [Development mode](#development-mode)
+  - [Production mode](#production-mode)
+- [Endpoints](#endpoints)
+  - [Donations](#donations)
+    - [Get maximum donation](#get-maximum-donation)
+
 ## Setup
 
 Before running the API, take care of the following.
 
-### Intall dependencies
+### Install dependencies
 
 After cloning the repo, run `npm install` in the project's root directory.
 
@@ -57,3 +68,115 @@ API endpoints will be exposed at `localhost:3001`.
 Run `npm run prod`.
 
 API endpoints will be exposed on port 3002.
+
+# Endpoints
+
+For development, the base URL for the Standard Charity API is:
+
+```
+https://api-dev.standardcharity.org/
+```
+
+For production, the base URL for the Standard Charity API is:
+
+```
+https://api.standardcharity.org/
+```
+
+If you're forking this repo to create your own API, your base URLs would of course be different.
+
+All endpoints return a response of the following format:
+
+```typescript
+interface IResponse {
+  ok: boolean;
+  payload: { [key: string]: any } | null;
+  error: IError | null;
+}
+```
+
+where IError is defined as:
+
+```typescript
+interface IError {
+  message: string;
+}
+```
+
+## Donations
+
+Endpoints related to donations
+
+## Get maximum donation
+
+Returns json data about the contract's top donation, if any donations exist at all
+
+- **URL**
+
+  /donations/max
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    If a maximum donation exists:
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
+          "value": "2c68af0bb140000",
+          "timestamp": 1598317668
+        },
+        "error": null
+      }
+    ```
+
+    If a maximum donation does not exist:
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": null,
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching the maximum donation',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/donations/max`);
+  ```

@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [0.0.9] - 2020-08-24
+
+### Added
+
+- Standard route class
+- Plates deployed as needed across functions
+- Max donation route functionality
+
+### Changed
+
+- Docs
+
 ## [0.0.8] - 2020-08-22
 
 ### Added

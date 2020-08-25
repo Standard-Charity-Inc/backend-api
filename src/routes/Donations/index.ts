@@ -1,7 +1,9 @@
 import { Router } from 'express';
 
-import GetTopDonation from './GetTopDonation';
+import GetMaxDonation from './GetMaxDonation';
 
-const donations = Router();
+export const donations = Router();
 
-donations.get('/top', (req, res, next) => {});
+donations.get('/max', (req, res, next) =>
+  new GetMaxDonation(req, res, next).init()
+);
