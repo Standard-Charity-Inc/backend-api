@@ -130,6 +130,7 @@ Returns json array of donations
   **Required:**
 
   `page: Int`
+  
   `pageSize: Int` Maximum of 100
 
   **Optional:**
