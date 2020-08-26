@@ -358,7 +358,7 @@ class StandardCharityContractFunctions {
 
       return {
         donator: maxDonation.donator,
-        value: new Web3().utils.toBN(maxDonation.value),
+        value: maxDonation.value,
         timestamp: Number(maxDonation.timestamp),
       };
     } catch (e) {
@@ -386,7 +386,7 @@ class StandardCharityContractFunctions {
 
       return {
         donator: latestDonation.donator,
-        value: new Web3().utils.toBN(latestDonation.value),
+        value: latestDonation.value,
         timestamp: Number(latestDonation.timestamp),
       };
     } catch (e) {
