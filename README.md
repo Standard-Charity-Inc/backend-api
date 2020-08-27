@@ -24,6 +24,11 @@ You'll also need [Redis](https://redis.io/) installed, and an instance of Redis 
     - [Get latest donation](#get-latest-donation)
     - [Get total ETH donations](#get-total-eth-donations)
     - [Get total number of donations](#get-total-number-of-donations)
+  - [Expenditures](#expenditures)
+    - [Get expenditures](#get-expenditures)
+    - [Get total ETH expenditures](#get-total-eth-expenditures)
+    - [Get total number of expenditures](#get-total-number-of-expenditures)
+    - [Get plates deployed](#get-plates-deployed)
 
 ## Setup
 
@@ -130,7 +135,7 @@ Returns json array of donations
   **Required:**
 
   `page: Int`
-  
+
   `pageSize: Int` Maximum of 100
 
   **Optional:**
@@ -146,8 +151,6 @@ Returns json array of donations
   - **Status code:** 200
 
     **Content:**
-
-    If a latest donation exists:
 
     ```javascript
       {
@@ -213,6 +216,10 @@ Returns json data about the contract's top donation, if any donations exist at a
 
   None
 
+  **Optional:**
+
+  `count: Int` The number of top donations to return (up to 25)
+
 - **Data Params**
 
   None
@@ -223,26 +230,43 @@ Returns json data about the contract's top donation, if any donations exist at a
 
     **Content:**
 
-    If a maximum donation exists:
+    If a maximum donation(s) exists:
 
     ```javascript
       {
         "ok": true,
-        "payload": {
-          "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
-          "value": "2c68af0bb140000",
-          "timestamp": 1598317668
-        },
+        "payload": [
+          {
+            "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
+            "value": "350000000000000000", // in wei
+            "timestamp": 1598490278,
+            "valueExpendedETH": "0", // in wei
+            "valueExpendedUSD": 0, // in cents
+            "valueRefundedETH": "0", // in wei
+            "donationNumber": 3,
+            "numExpenditures": 0
+          },
+          {
+            "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
+            "value": "200000000000000000", // in wei
+            "timestamp": 1598317668,
+            "valueExpendedETH": "0", // in wei
+            "valueExpendedUSD": 0, // in cents
+            "valueRefundedETH": "0", // in wei
+            "donationNumber": 1,
+            "numExpenditures": 0
+          },
+        ],
         "error": null
       }
     ```
 
-    If a maximum donation does not exist:
+    If a maximum donation does not exist, i.e. there are no donations:
 
     ```javascript
       {
         "ok": true,
-        "payload": null,
+        "payload": [],
         "error": null
       }
     ```
@@ -266,7 +290,7 @@ Returns json data about the contract's top donation, if any donations exist at a
 - **Sample Call:**
 
   ```javascript
-  const res = await superagent.get(`${BASE_URL}/donations/max`);
+  const res = await superagent.get(`${BASE_URL}/donations/max?count=10`);
   ```
 
 ## Get latest donation
@@ -304,7 +328,7 @@ Returns json data about the contract's most recent donation, if any donations ex
         "ok": true,
         "payload": {
           "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
-          "value": "2c68af0bb140000",
+          "value": "2c68af0bb140000", // in wei
           "timestamp": 1598317668
         },
         "error": null
@@ -431,8 +455,6 @@ Returns json data about the total count of donations to the contract
 
     **Content:**
 
-    If a latest donation exists:
-
     ```javascript
       {
         "ok": true,
@@ -463,4 +485,281 @@ Returns json data about the total count of donations to the contract
 
   ```javascript
   const res = await superagent.get(`${BASE_URL}/donations/totalNumber`);
+  ```
+
+## Expenditures
+
+Endpoints related to expenditures
+
+## Get expenditures
+
+Returns json array of expenditures
+
+- **URL**
+
+  /expenditures/all
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  `page: Int`
+
+  `pageSize: Int` Maximum of 100
+
+  **Optional:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "expenditures": [
+            {
+              "expenditureNumber": 1,
+              "valueExpendedETH": "50000000000000000", // in wei
+              "valueExpendedUSD": 1055, // in cents
+              "videoHash": "abc",
+              "receiptHash": "def",
+              "timestamp": 1598491778,
+              "numExpendedDonations": 0,
+              "valueExpendedByDonations": "0", // in wei
+              "platesDeployed": 4
+            },
+            {
+              "expenditureNumber": 2,
+              "valueExpendedETH": "40000000000000000", // in wei
+              "valueExpendedUSD": 950, // in cents
+              "videoHash": "abc",
+              "receiptHash": "def",
+              "timestamp": 1598492633,
+              "numExpendedDonations": 0,
+              "valueExpendedByDonations": "0", // in wei
+              "platesDeployed": 3
+            }
+          ],
+          "total": 2
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching expenditures',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(
+    `${BASE_URL}/expenditures/all?page=1&pageSize=50`
+  );
+  ```
+
+## Get total ETH expenditures
+
+Returns json data about the contract's overall value of expenditures denomiated in wei
+
+- **URL**
+
+  /expenditures/totalEth
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "totalExpendedEth": "50000000000000000" // in wei
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching total expenditures denominated in ETH',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/expenditures/totalEth`);
+  ```
+
+## Get total number of expenditures
+
+Returns json data about the total count of expenditures from the contract
+
+- **URL**
+
+  /expenditures/totalNumber
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "totalNumExpenditures": 1
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching the total number of expenditures',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/expenditures/totalNumber`);
+  ```
+
+## Get plates deployed
+
+Returns json data about the total number of plates deployed and average price per plate in USD
+
+- **URL**
+
+  /expenditures/plates
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "platesDeployed": 10,
+          "pricePerPlateUsd": "10.05"
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching plates deployed',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/expenditures/plates`);
   ```

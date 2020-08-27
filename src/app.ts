@@ -11,6 +11,7 @@ import { init as initRedis } from './redis/instance';
 import Infura from './Infura';
 import BN from 'bn.js';
 import { donations } from './routes/Donations';
+import { expenditures } from './routes/Expenditures';
 
 const config = Config[Config.env];
 
@@ -26,6 +27,7 @@ app.get('/', (_, res) => {
 });
 
 app.use('/donations', donations);
+app.use('/expenditures', expenditures);
 
 const restartApp = (reason: string, timeoutSeconds: number) => {
   console.log(

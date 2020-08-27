@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [0.0.11] - 2020-08-26
+
+### Added
+
+- Expenditure endpoints
+
+### Changed
+
+- Get max donation function to return array of donations based on input
+
 ## [0.0.10] - 2020-08-25
 
 ### Added

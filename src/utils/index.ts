@@ -126,7 +126,7 @@ export const getPageStartEnd = (page: any, pageSize: any): IPage => {
 
     const start = (Number(page) - 1) * size;
 
-    const end = Number(page) * size - 1;
+    const end = Number(page) * size;
 
     return {
       start,
