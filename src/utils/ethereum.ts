@@ -33,14 +33,18 @@ export const encodeCallData = (
 export const decodeFunctionResult = (
   abi: any,
   functionName: ContractFunctionName,
-  data: string
+  data: string,
+  abiItemName?: 'inputs'
 ): { [key: string]: any } | null => {
   try {
     const web3 = new Web3();
 
     const abiItem = find(abi, (o) => o.name === functionName);
 
-    const decodedParams = web3.eth.abi.decodeParameters(abiItem.outputs, data);
+    const decodedParams = web3.eth.abi.decodeParameters(
+      abiItem[abiItemName || 'outputs'],
+      data
+    );
 
     return decodedParams;
   } catch (e) {

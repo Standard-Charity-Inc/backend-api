@@ -1,4 +1,5 @@
 import Web3 from 'web3';
+import { uniqWith } from 'lodash';
 
 import { redisClient, setValue, getValue, lpush, readLrange } from './instance';
 import Infura from '../Infura';
@@ -463,7 +464,7 @@ class Redis {
             return;
           }
 
-          await lpush(RedisKeys.ALL_DONATIONS, [JSON.stringify(donation)]);
+          await this.pushDonation(JSON.stringify(donation));
         })
       );
     } catch (e) {
@@ -471,26 +472,42 @@ class Redis {
     }
   };
 
+  pushDonation = async (donation: string): Promise<void> => {
+    try {
+      await lpush(RedisKeys.ALL_DONATIONS, [donation]);
+    } catch (e) {
+      console.log('pushDonation error in redis:', e);
+    }
+  };
+
   getAllDonations = async (): Promise<IDonation[]> => {
     try {
       const donations = await readLrange(RedisKeys.ALL_DONATIONS, 0, -1);
 
-      return donations
-        ? donations.map((x) => {
-            const donation = JSON.parse(x);
+      let allDonations: IDonation[] = [];
 
-            return {
-              donator: donation.donator,
-              value: donation.value,
-              timestamp: Number(donation.timestamp),
-              valueExpendedETH: donation.valueExpendedETH,
-              valueExpendedUSD: Number(donation.valueExpendedUSD),
-              valueRefundedETH: donation.valueRefundedETH,
-              donationNumber: Number(donation.donationNumber),
-              numExpenditures: Number(donation.numExpenditures),
-            };
-          })
-        : [];
+      if (donations) {
+        allDonations = donations.map((x) => {
+          const donation = JSON.parse(x);
+
+          return {
+            donator: donation.donator,
+            value: donation.value,
+            timestamp: Number(donation.timestamp),
+            valueExpendedETH: donation.valueExpendedETH,
+            valueExpendedUSD: Number(donation.valueExpendedUSD),
+            valueRefundedETH: donation.valueRefundedETH,
+            donationNumber: Number(donation.donationNumber),
+            numExpenditures: Number(donation.numExpenditures),
+          };
+        });
+      }
+
+      return uniqWith(
+        allDonations,
+        (a, b) =>
+          a.donationNumber === b.donationNumber && a.donator === b.donator
+      );
     } catch (e) {
       console.log('getAllDonations redis error:', e);
 

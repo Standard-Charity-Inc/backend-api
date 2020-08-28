@@ -3,31 +3,24 @@ import { find, map } from 'lodash';
 
 import Config from '../config';
 import StandardCharityContractFunctions from './StandardCharity/ContractFunctions';
+import StandardCharityContractEvents, {
+  ContractEventName,
+  IEventWithTopic,
+  IContractEvent,
+} from './StandardCharity/ContractEvents';
 
 const config = Config[Config.env];
-
-type ContractEvent =
-  | 'LogNewDonation'
-  | 'LogNewExpenditure'
-  | 'LogNewExpendedDonation'
-  | 'LogNewRefund';
-
-interface IEventWithTopic {
-  event: ContractEvent;
-  topic: string;
-}
 
 class Infura extends StandardCharityContractFunctions {
   newBlockHeadersSubscription: any;
   web3?: any;
-  events: ContractEvent[];
+  eventNames: ContractEventName[];
   standardCharityContractSubscription: any;
-  eventsWithTopics?: IEventWithTopic[];
 
   constructor() {
     super();
 
-    this.events = [
+    this.eventNames = [
       'LogNewDonation',
       'LogNewExpenditure',
       'LogNewExpendedDonation',
@@ -107,9 +100,9 @@ class Infura extends StandardCharityContractFunctions {
         config.contracts.standardCharity.address
       );
 
-      this.eventsWithTopics = [];
+      const eventsWithTopics: IEventWithTopic[] = [];
 
-      this.events.map((event) => {
+      this.eventNames.map((event) => {
         try {
           const signature = find(
             StandardCharityContract._jsonInterface,
@@ -122,12 +115,10 @@ class Infura extends StandardCharityContractFunctions {
             return;
           }
 
-          if (this.eventsWithTopics) {
-            this.eventsWithTopics.push({
-              event,
-              topic: signature,
-            });
-          }
+          eventsWithTopics.push({
+            event,
+            topic: signature,
+          });
         } catch (e) {
           console.log('Could not get singature for event:', e);
         }
@@ -136,13 +127,15 @@ class Infura extends StandardCharityContractFunctions {
       this.standardCharityContractSubscription = this.web3.eth
         .subscribe('logs', {
           address: [config.contracts.standardCharity.address],
-          topics: [map(this.eventsWithTopics, 'topic')],
+          topics: [map(eventsWithTopics, 'topic')],
         })
         .on('connected', () => {
           console.log('Infura websocket connected');
         })
-        .on('data', (e: any) => {
-          console.log('event:', e);
+        .on('data', (event: IContractEvent) => {
+          console.log('Contract event:', event);
+
+          new StandardCharityContractEvents(eventsWithTopics).init(event);
         })
         .on('error', (error: any) => {
           console.log(

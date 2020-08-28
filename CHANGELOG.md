@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.0.12] - 2020-08-27
+
+### Added
+
+- Contract event handlers
+- New donation event handling
+
 ## [0.0.11] - 2020-08-26
 
 ### Added

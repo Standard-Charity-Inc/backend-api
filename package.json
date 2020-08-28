@@ -1,6 +1,6 @@
 {
   "name": "backend-api",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Backend API resources for Standard Charity",
   "main": "build/app.js",
   "scripts": {

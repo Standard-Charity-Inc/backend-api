@@ -1,3 +1,5 @@
+import { ContractEventName } from '../Infura/StandardCharity/ContractEvents';
+
 export type ContractFunctionName =
   | 'donate'
   | 'createExpenditure'
@@ -23,7 +25,8 @@ export type ContractFunctionName =
   | 'totalDonationsETH'
   | 'totalExpendedETH'
   | 'totalExpendedUSD'
-  | 'totalPlatesDeployed';
+  | 'totalPlatesDeployed'
+  | ContractEventName;
 
 export interface ISpotlightDonation {
   donator: string;

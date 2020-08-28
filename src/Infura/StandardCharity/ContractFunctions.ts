@@ -13,6 +13,7 @@ import {
 import { encodeCallData, decodeFunctionResult } from '../../utils/ethereum';
 import { getSignedTx } from '../../utils';
 import Config from '../../config';
+import ABI from './ABI';
 
 const config = Config[Config.env];
 
@@ -25,18 +26,7 @@ interface ICallContractFunction {
   value?: number;
 }
 
-class StandardCharityContractFunctions {
-  standardCharityAbi: any;
-
-  constructor() {
-    try {
-      this.standardCharityAbi = require(config.contracts.standardCharity
-        .abiFilePath);
-    } catch (e) {
-      console.log('Error getting Standard Charity ABI:', e);
-    }
-  }
-
+class StandardCharityContractFunctions extends ABI {
   public callStandardCharityContract = async (
     functionName: ContractFunctionName,
     value: number,
