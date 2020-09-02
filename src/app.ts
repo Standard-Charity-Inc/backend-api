@@ -3,15 +3,20 @@ dotenvConfig();
 
 import * as bodyParser from 'body-parser';
 import express from 'express';
+import fileUpload from 'express-fileupload';
+import AWS from 'aws-sdk';
+import { CronJob } from 'cron';
 
 import Config from './config';
 import { setCors } from './middleware';
 import Redis from './redis';
 import { init as initRedis } from './redis/instance';
 import Infura from './Infura';
-import BN from 'bn.js';
 import { donations } from './routes/Donations';
 import { expenditures } from './routes/Expenditures';
+import { expendedDonations } from './routes/ExpendedDonations';
+import { IResponse } from './routes/StandardRoute';
+import CheckForRefunds from './routes/Refunds/CheckForRefunds';
 
 const config = Config[Config.env];
 
@@ -22,14 +27,45 @@ app.use(bodyParser.json({ limit: '500mb' }));
 app.set('trust proxy', 1);
 app.use(setCors);
 
+const maxUploadSizeMb = 500;
+
+app.use(
+  fileUpload({
+    limits: { fileSize: maxUploadSizeMb * 1024 * 1024 },
+    useTempFiles: true,
+    tempFileDir: `${__dirname}/routes/Expenditures/tmp`,
+    debug: true,
+    limitHandler: (_, res, __) => {
+      const response: IResponse = {
+        ok: false,
+        payload: null,
+        error: {
+          message: `The file size exceeds the maximum upload size of ${maxUploadSizeMb} MB`,
+        },
+      };
+
+      return res.json(response).status(400);
+    },
+  })
+);
+
 app.get('/', (_, res) => {
   res.sendStatus(200);
 });
 
 app.use('/donations', donations);
 app.use('/expenditures', expenditures);
+app.use('/expendedDonations', expendedDonations);
+
+let cronJob: CronJob | null = null;
 
 const restartApp = (reason: string, timeoutSeconds: number) => {
+  if (cronJob) {
+    cronJob.stop();
+
+    cronJob = null;
+  }
+
   console.log(
     `The API will restart in ${timeoutSeconds} seconds. Reason: ${reason}`
   );
@@ -47,32 +83,38 @@ const startApp = () => {
     );
   }
 
+  if (
+    !config.aws.accessKey ||
+    !config.aws.secretAccessKey ||
+    !config.aws.s3.bucketName
+  ) {
+    return restartApp('Missing AWS credentials in environment variables', 10);
+  }
+
   initRedis().then(async () => {
+    AWS.config.update({
+      region: 'us-east-1',
+      accessKeyId: config.aws.accessKey,
+      secretAccessKey: config.aws.secretAccessKey,
+    });
+
     new Infura().initializeWebsocket();
 
     await new Redis().fillCache();
 
-    // const item2 = await new Redis().getTotalPlatesDeployed();
+    new CheckForRefunds().init();
 
-    // console.log('item2:', item2);
+    cronJob = new CronJob(
+      '0 4 * * *',
+      function () {
+        new CheckForRefunds().init();
+      },
+      null,
+      true,
+      'America/New_York'
+    );
 
-    // const item = await new Infura().createExpenditure('1234abc', '5678defg', 50034, new BN('1000000000000000'))
-
-    // console.log('item:', item);
-
-    // const item3 = await new Infura().createExpendedDonation(
-    //   '0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40',
-    //   new BN('1000000000000000'),
-    //   100,
-    //   1,
-    //   2
-    // )
-
-    // console.log('item3:', item3);
-
-    // const item4 = await new Infura().setNextDonationToExpend(2);
-
-    // console.log('item4:', item4);
+    cronJob.start();
 
     app.listen(config.port, () => {
       console.log(

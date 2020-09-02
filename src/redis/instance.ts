@@ -100,4 +100,16 @@ export const lpush = async (key: string, items: string[]): Promise<void> => {
   }
 };
 
+export const deleteKey = async (key: string): Promise<void> => {
+  try {
+    return new Promise((resolve) => {
+      redisClient.del(key, () => {
+        resolve();
+      });
+    });
+  } catch (e) {
+    console.log('Could not deleteKey for redis:', e);
+  }
+};
+
 export { init, redisClient };

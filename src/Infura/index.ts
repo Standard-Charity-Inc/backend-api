@@ -25,6 +25,7 @@ class Infura extends StandardCharityContractFunctions {
       'LogNewExpenditure',
       'LogNewExpendedDonation',
       'LogNewRefund',
+      'LogNewNextDonationToExpend',
     ];
   }
 
@@ -133,8 +134,6 @@ class Infura extends StandardCharityContractFunctions {
           console.log('Infura websocket connected');
         })
         .on('data', (event: IContractEvent) => {
-          console.log('Contract event:', event);
-
           new StandardCharityContractEvents(eventsWithTopics).init(event);
         })
         .on('error', (error: any) => {

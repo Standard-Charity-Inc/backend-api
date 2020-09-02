@@ -9,6 +9,8 @@ import {
   IDonation,
   IExpenditure,
   IExpendedDonation,
+  IPendingExpendedDonation,
+  IPendingRefund,
 } from '../../types';
 import { encodeCallData, decodeFunctionResult } from '../../utils/ethereum';
 import { getSignedTx } from '../../utils';
@@ -129,8 +131,6 @@ class StandardCharityContractFunctions extends ABI {
         });
 
       if (!res || !res.body || !res.body.result) {
-        console.log('Could not get result in sendRawTransaction in Infura');
-
         return null;
       }
 
@@ -626,16 +626,12 @@ class StandardCharityContractFunctions extends ABI {
    * @param donationNumber Donation number as it relates to the donator's address, not overall
    * @param valueETHToRefund denominated in wei
    */
-  public refundDonation = async (
-    address: string,
-    donationNumber: number,
-    valueETHToRefund: BN
-  ): Promise<boolean> => {
+  public refundDonation = async (args: IPendingRefund): Promise<boolean> => {
     try {
       const refundRes = await this.sendRawTransaction('refundDonation', [
-        address,
-        donationNumber,
-        valueETHToRefund.toString(),
+        args.address,
+        args.donationNumber,
+        args.valueETHToRefund,
       ]);
 
       if (refundRes && refundRes.__length__ === 0) {
@@ -661,12 +657,19 @@ class StandardCharityContractFunctions extends ABI {
     videoHash: string,
     receiptHash: string,
     valueUSD: number,
-    valueETH: BN
+    valueETH: BN,
+    platesDeployed: number
   ): Promise<boolean> => {
     try {
       const createExpenditureRes = await this.sendRawTransaction(
         'createExpenditure',
-        [videoHash, receiptHash, valueUSD.toString(), valueETH.toString()]
+        [
+          videoHash,
+          receiptHash,
+          valueUSD.toString(),
+          valueETH.toString(),
+          platesDeployed,
+        ]
       );
 
       if (createExpenditureRes && createExpenditureRes.__length__ === 0) {
@@ -690,25 +693,20 @@ class StandardCharityContractFunctions extends ABI {
    * @param expenditureNumber Overall expenditure number
    */
   public createExpendedDonation = async (
-    donator: string,
-    valueExpendedETH: BN,
-    valueExpendedUSD: number,
-    donationNumber: number,
-    expenditureNumber: number
+    args: IPendingExpendedDonation
   ): Promise<boolean> => {
     try {
       const createExpendedDonationRes = await this.sendRawTransaction(
         'createExpendedDonation',
         [
-          donator,
-          valueExpendedETH.toString(),
-          valueExpendedUSD.toString(),
-          donationNumber,
-          expenditureNumber,
+          args.donator,
+          args.valueExpendedETH.toString(),
+          args.valueExpendedUSD.toString(),
+          args.donationNumber,
+          args.expenditureNumber,
+          args.platesDeployed,
         ]
       );
-
-      console.log('createExpendedDonationRes:', createExpendedDonationRes);
 
       if (
         createExpendedDonationRes &&
@@ -733,12 +731,9 @@ class StandardCharityContractFunctions extends ABI {
     nextDonationToExpend: number
   ): Promise<boolean> => {
     try {
-      const setNextDonationToExpendRes = await this.sendRawTransaction(
-        'setNextDonationToExpend',
-        [nextDonationToExpend]
-      );
-
-      console.log('setNextDonationToExpendRes:', setNextDonationToExpendRes);
+      await this.sendRawTransaction('setNextDonationToExpend', [
+        nextDonationToExpend,
+      ]);
 
       return true;
     } catch (e) {

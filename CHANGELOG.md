@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [0.0.13] - 2020-08-27
+
+### Added
+
+- Events-based functionality
+- ETH price fetching
+- Hashing functionality
+- AWS integration
+- Refund functionality
+- Expended donation creation and fetching
+
 ## [0.0.12] - 2020-08-27
 
 ### Added

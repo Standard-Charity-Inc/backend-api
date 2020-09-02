@@ -1,3 +1,5 @@
+import BN from 'bn.js';
+
 import { ContractEventName } from '../Infura/StandardCharity/ContractEvents';
 
 export type ContractFunctionName =
@@ -48,7 +50,6 @@ export interface IDonation {
   valueExpendedUSD: number;
   valueRefundedETH: string;
   donationNumber: number;
-  // mapping (uint256 => uint256) expendedDonationIDs;
   numExpenditures: number;
 }
 
@@ -59,7 +60,6 @@ export interface IExpenditure {
   videoHash: string;
   receiptHash: string;
   timestamp: number;
-  // mapping (uint256 => uint256) expendedDonationIDs;
   numExpendedDonations: number;
   valueExpendedByDonations: string;
   platesDeployed: number;
@@ -73,4 +73,19 @@ export interface IExpendedDonation {
   expenditureNumber: number;
   donationNumber: number;
   platesDeployed: number;
+}
+
+export interface IPendingExpendedDonation {
+  donator: string;
+  valueExpendedETH: BN | string;
+  valueExpendedUSD: number;
+  donationNumber: number;
+  expenditureNumber: number;
+  platesDeployed: number;
+}
+
+export interface IPendingRefund {
+  address: string;
+  donationNumber: number;
+  valueETHToRefund: string;
 }

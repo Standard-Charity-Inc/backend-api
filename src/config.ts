@@ -21,6 +21,13 @@ interface IPlatform {
   ethereum: {
     wallet: ethers.Wallet | null;
   };
+  aws: {
+    accessKey: string;
+    secretAccessKey: string;
+    s3: {
+      bucketName: string;
+    };
+  };
 }
 
 interface IConfig {
@@ -69,6 +76,13 @@ const config: IConfig = {
         ? mnemonicToWallet(process.env.ETH_WALLET_MNEMONIC_DEV as string)
         : null,
     },
+    aws: {
+      accessKey: process.env.AWS_ACCESS_KEY_ID_DEV as string,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_DEV as string,
+      s3: {
+        bucketName: process.env.S3_BUCKET_NAME_DEV as string,
+      },
+    },
   },
   prod: {
     port: 3002,
@@ -99,6 +113,13 @@ const config: IConfig = {
       wallet: process.env.ETH_WALLET_MNEMONIC_PROD
         ? mnemonicToWallet(process.env.ETH_WALLET_MNEUMONIC_PROD as string)
         : null,
+    },
+    aws: {
+      accessKey: process.env.AWS_ACCESS_KEY_ID_PROD as string,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_PROD as string,
+      s3: {
+        bucketName: process.env.S3_BUCKET_NAME_PROD as string,
+      },
     },
   },
 };

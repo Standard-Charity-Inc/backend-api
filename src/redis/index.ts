@@ -1,5 +1,6 @@
 import Web3 from 'web3';
-import { uniqWith } from 'lodash';
+import { uniqWith, uniqBy } from 'lodash';
+import BN from 'bn.js';
 
 import { redisClient, setValue, getValue, lpush, readLrange } from './instance';
 import Infura from '../Infura';
@@ -9,10 +10,12 @@ import {
   IDonation,
   IExpenditure,
   IExpendedDonation,
+  IPendingExpendedDonation,
+  IPendingRefund,
 } from '../types';
 import { numPlatesToFloating } from '../utils';
 
-enum RedisKeys {
+export enum RedisKeys {
   TOTAL_NUM_DONATIONS = 'totalNumDonations',
   TOTAL_NUM_EXPENDITURES = 'totalNumExpenditures',
   TOTAL_NUM_EXPENDED_DONATIONS = 'totalNumExpendedDonations',
@@ -28,6 +31,11 @@ enum RedisKeys {
   ALL_DONATIONS = 'allDonations',
   ALL_EXPENDITURES = 'allExpenditures',
   ALL_EXPENDED_DONATIONS = 'allExpendedDonations',
+  IS_CREATING_EXPENDITURE = 'isCreatingExpenditure',
+  PENDING_EXPENDED_DONATIONS = 'pendingExpendedDonations',
+  PENDING_NEXT_DONATION_TO_EXPEND = 'pendingNextDonationToExpend',
+  IS_CREATING_REFUNDS = 'isCreatingRefunds',
+  PENDING_REFUNDS = 'pendingRefunds',
 }
 
 class Redis {
@@ -43,6 +51,8 @@ class Redis {
   public fillCache = async (): Promise<void> => {
     try {
       await this.flushCache();
+
+      await this.setIsCreatingExpenditure(false);
 
       await this.setTotalNumDonations();
 
@@ -70,6 +80,8 @@ class Redis {
 
       await this.setAllExpenditures();
 
+      await this.setTotalNumExpendedDonations();
+
       await this.setAllExpendedDonations();
 
       console.log('redis cache created');
@@ -93,6 +105,186 @@ class Redis {
       console.log('Catch error in flushCache:', e);
 
       return;
+    }
+  };
+
+  setPendingNextDonationToExpend = async (
+    nextDonationToExpend: number
+  ): Promise<void> => {
+    try {
+      await setValue(
+        RedisKeys.PENDING_NEXT_DONATION_TO_EXPEND,
+        nextDonationToExpend.toString()
+      );
+    } catch (e) {
+      console.log('Catch error in setPendingNextDonationToExpend in redis:', e);
+    }
+  };
+
+  getPendingNextDonationToExpend = async (): Promise<number | null> => {
+    try {
+      const pendingNextDonationToExpend = await getValue(
+        RedisKeys.PENDING_NEXT_DONATION_TO_EXPEND
+      );
+
+      if (!pendingNextDonationToExpend) {
+        return null;
+      }
+
+      return Number(pendingNextDonationToExpend);
+    } catch (e) {
+      console.log('Catch error in getPendingNextDonationToExpend in redis:', e);
+
+      return null;
+    }
+  };
+
+  setIsCreatingExpenditure = async (isCreating: boolean): Promise<void> => {
+    try {
+      await setValue(RedisKeys.IS_CREATING_EXPENDITURE, `${isCreating}`);
+    } catch (e) {
+      console.log('Catch error in setIsCreatingExpenditure in redis:', e);
+    }
+  };
+
+  getIsCreatingExpenditure = async (): Promise<boolean> => {
+    try {
+      const isCreatingPendingDonations = await getValue(
+        RedisKeys.IS_CREATING_EXPENDITURE
+      );
+
+      return isCreatingPendingDonations === 'true';
+    } catch (e) {
+      console.log('Catch error in getIsCreatingExpenditure in redis:', e);
+
+      return false;
+    }
+  };
+
+  setIsCreatingRefunds = async (isCreating: boolean): Promise<void> => {
+    try {
+      await setValue(RedisKeys.IS_CREATING_REFUNDS, `${isCreating}`);
+    } catch (e) {
+      console.log('Catch error in setIsCreatingRefunds in redis:', e);
+    }
+  };
+
+  getIsCreatingRefunds = async (): Promise<boolean> => {
+    try {
+      const isCreatingRefunds = await getValue(RedisKeys.IS_CREATING_REFUNDS);
+
+      return isCreatingRefunds === 'true';
+    } catch (e) {
+      console.log('Catch error in getIsCreatingRefunds in redis:', e);
+
+      return false;
+    }
+  };
+
+  pushToPendingRefunds = async (
+    pendingRefund: string | string[]
+  ): Promise<void> => {
+    try {
+      if (Array.isArray(pendingRefund) && pendingRefund.length === 0) {
+        return;
+      }
+
+      await lpush(
+        RedisKeys.PENDING_REFUNDS,
+        Array.isArray(pendingRefund) ? pendingRefund : [pendingRefund]
+      );
+    } catch (e) {
+      console.log('pushToPendingRefunds error in redis:', e);
+    }
+  };
+
+  getAllPendingRefunds = async (): Promise<IPendingRefund[]> => {
+    try {
+      const pendingRefunds = await readLrange(RedisKeys.PENDING_REFUNDS, 0, -1);
+
+      let allPendingRefunds: IPendingRefund[] = [];
+
+      if (pendingRefunds) {
+        allPendingRefunds = pendingRefunds.map((x) => {
+          const pendingRefund = JSON.parse(x);
+
+          return {
+            address: pendingRefund.address,
+            donationNumber: Number(pendingRefund.donationNumber),
+            valueETHToRefund: pendingRefund.valueETHToRefund,
+          };
+        });
+      }
+
+      return uniqWith(
+        allPendingRefunds,
+        (a, b) =>
+          a.donationNumber === b.donationNumber &&
+          a.address.toLowerCase() === b.address.toLowerCase()
+      );
+    } catch (e) {
+      console.log('getAllPendingRefunds redis error:', e);
+
+      return [];
+    }
+  };
+
+  pushToPendingExpendedDonations = async (
+    pendingDonation: string | string[]
+  ): Promise<void> => {
+    try {
+      if (Array.isArray(pendingDonation) && pendingDonation.length === 0) {
+        return;
+      }
+
+      await lpush(
+        RedisKeys.PENDING_EXPENDED_DONATIONS,
+        Array.isArray(pendingDonation) ? pendingDonation : [pendingDonation]
+      );
+    } catch (e) {
+      console.log('pushToPendingExpendedDonations error in redis:', e);
+    }
+  };
+
+  getAllPendingExpendedDonations = async (): Promise<
+    IPendingExpendedDonation[]
+  > => {
+    try {
+      const pendingExpendedDonations = await readLrange(
+        RedisKeys.PENDING_EXPENDED_DONATIONS,
+        0,
+        -1
+      );
+
+      let allPendingExpendedDonations: IPendingExpendedDonation[] = [];
+
+      if (pendingExpendedDonations) {
+        allPendingExpendedDonations = pendingExpendedDonations.map((x) => {
+          const pendingExpendedDonation = JSON.parse(x);
+
+          return {
+            donator: pendingExpendedDonation.donator,
+            valueExpendedETH: new BN(pendingExpendedDonation.valueExpendedETH),
+            valueExpendedUSD: Number(pendingExpendedDonation.valueExpendedUSD),
+            donationNumber: Number(pendingExpendedDonation.donationNumber),
+            expenditureNumber: Number(
+              pendingExpendedDonation.expenditureNumber
+            ),
+            platesDeployed: Number(pendingExpendedDonation.platesDeployed),
+          };
+        });
+      }
+
+      return uniqWith(
+        allPendingExpendedDonations,
+        (a, b) =>
+          a.donationNumber === b.donationNumber &&
+          a.donator.toLowerCase() === b.donator.toLowerCase()
+      );
+    } catch (e) {
+      console.log('getAllPendingExpendedDonations redis error:', e);
+
+      return [];
     }
   };
 
@@ -301,9 +493,10 @@ class Redis {
     }
   };
 
-  setNextDonationToExpend = async (): Promise<void> => {
+  setNextDonationToExpend = async (nextToExpend?: number): Promise<void> => {
     try {
-      const nextDonationToExpend = await this.infura.getNextDonationToExpend();
+      const nextDonationToExpend =
+        nextToExpend || (await this.infura.getNextDonationToExpend());
 
       if (!nextDonationToExpend) {
         return;
@@ -421,13 +614,23 @@ class Redis {
             return;
           }
 
-          await lpush(RedisKeys.DONATION_TRACKER_ITEMS, [
-            JSON.stringify(donationTrackerItem),
-          ]);
+          await this.pushDonationTrackerItem(
+            JSON.stringify(donationTrackerItem)
+          );
         })
       );
     } catch (e) {
       console.log('setDonationTracker redis error:', e);
+    }
+  };
+
+  pushDonationTrackerItem = async (
+    donationTrackerItem: string
+  ): Promise<void> => {
+    try {
+      await lpush(RedisKeys.DONATION_TRACKER_ITEMS, [donationTrackerItem]);
+    } catch (e) {
+      console.log('pushDonationTrackerItem error in redis:', e);
     }
   };
 
@@ -438,6 +641,14 @@ class Redis {
         0,
         -1
       );
+
+      let allDonationTrackerItems: IDonationTrackerItem[] = [];
+
+      if (donationTrackerItems) {
+        allDonationTrackerItems = donationTrackerItems.map((x) =>
+          JSON.parse(x)
+        );
+      }
 
       return donationTrackerItems
         ? donationTrackerItems.map((x) => JSON.parse(x))
@@ -472,9 +683,16 @@ class Redis {
     }
   };
 
-  pushDonation = async (donation: string): Promise<void> => {
+  pushDonation = async (donation: string | string[]): Promise<void> => {
     try {
-      await lpush(RedisKeys.ALL_DONATIONS, [donation]);
+      if (Array.isArray(donation) && donation.length === 0) {
+        return;
+      }
+
+      await lpush(
+        RedisKeys.ALL_DONATIONS,
+        Array.isArray(donation) ? donation : [donation]
+      );
     } catch (e) {
       console.log('pushDonation error in redis:', e);
     }
@@ -506,7 +724,8 @@ class Redis {
       return uniqWith(
         allDonations,
         (a, b) =>
-          a.donationNumber === b.donationNumber && a.donator === b.donator
+          a.donationNumber === b.donationNumber &&
+          a.donator.toLowerCase() === b.donator.toLowerCase()
       );
     } catch (e) {
       console.log('getAllDonations redis error:', e);
@@ -529,13 +748,19 @@ class Redis {
             return;
           }
 
-          await lpush(RedisKeys.ALL_EXPENDITURES, [
-            JSON.stringify(expenditure),
-          ]);
+          await this.pushExpenditure(JSON.stringify(expenditure));
         })
       );
     } catch (e) {
-      console.log('setDonationTracker redis error:', e);
+      console.log('setAllExpenditures redis error:', e);
+    }
+  };
+
+  pushExpenditure = async (expenditure: string): Promise<void> => {
+    try {
+      await lpush(RedisKeys.ALL_EXPENDITURES, [expenditure]);
+    } catch (e) {
+      console.log('pushExpenditure error in redis:', e);
     }
   };
 
@@ -543,23 +768,27 @@ class Redis {
     try {
       const expenditures = await readLrange(RedisKeys.ALL_EXPENDITURES, 0, -1);
 
-      return expenditures
-        ? expenditures.map((x) => {
-            const expenditure = JSON.parse(x);
+      let allExpenditures: IExpenditure[] = [];
 
-            return {
-              expenditureNumber: Number(expenditure.expenditureNumber),
-              valueExpendedETH: expenditure.valueExpendedETH,
-              valueExpendedUSD: Number(expenditure.valueExpendedUSD),
-              videoHash: expenditure.videoHash,
-              receiptHash: expenditure.receiptHash,
-              timestamp: Number(expenditure.timestamp),
-              numExpendedDonations: Number(expenditure.numExpendedDonations),
-              valueExpendedByDonations: expenditure.valueExpendedByDonations,
-              platesDeployed: numPlatesToFloating(expenditure.platesDeployed),
-            };
-          })
-        : [];
+      if (expenditures) {
+        allExpenditures = expenditures.map((x) => {
+          const expenditure = JSON.parse(x);
+
+          return {
+            expenditureNumber: Number(expenditure.expenditureNumber),
+            valueExpendedETH: expenditure.valueExpendedETH,
+            valueExpendedUSD: Number(expenditure.valueExpendedUSD),
+            videoHash: expenditure.videoHash,
+            receiptHash: expenditure.receiptHash,
+            timestamp: Number(expenditure.timestamp),
+            numExpendedDonations: Number(expenditure.numExpendedDonations),
+            valueExpendedByDonations: expenditure.valueExpendedByDonations,
+            platesDeployed: numPlatesToFloating(expenditure.platesDeployed),
+          };
+        });
+      }
+
+      return uniqBy(allExpenditures, (o) => o.expenditureNumber);
     } catch (e) {
       console.log('getAllDonations redis error:', e);
 
@@ -579,13 +808,19 @@ class Redis {
             return;
           }
 
-          await lpush(RedisKeys.ALL_EXPENDED_DONATIONS, [
-            JSON.stringify(expendedDonation),
-          ]);
+          await this.pushExpendedDonation(JSON.stringify(expendedDonation));
         })
       );
     } catch (e) {
       console.log('setDonationTracker redis error:', e);
+    }
+  };
+
+  pushExpendedDonation = async (expendedDonation: string): Promise<void> => {
+    try {
+      await lpush(RedisKeys.ALL_EXPENDED_DONATIONS, [expendedDonation]);
+    } catch (e) {
+      console.log('pushExpendedDonation error in redis:', e);
     }
   };
 
@@ -597,23 +832,29 @@ class Redis {
         -1
       );
 
-      return expendedDonations
-        ? expendedDonations.map((x) => {
-            const expendedDonation = JSON.parse(x);
+      let allExpendedDonations: IExpendedDonation[] = [];
 
-            return {
-              expendedDonationNumber: Number(
-                expendedDonation.expendedDonationNumber
-              ),
-              donator: expendedDonation.donator,
-              valueExpendedETH: expendedDonation.valueExpendedETH,
-              valueExpendedUSD: Number(expendedDonation.valueExpendedUSD),
-              expenditureNumber: Number(expendedDonation.expenditureNumber),
-              donationNumber: Number(expendedDonation.donationNumber),
-              platesDeployed: expendedDonation.platesDeployed,
-            };
-          })
-        : [];
+      if (expendedDonations) {
+        allExpendedDonations = expendedDonations.map((x) => {
+          const expendedDonation = JSON.parse(x);
+
+          return {
+            expendedDonationNumber: Number(
+              expendedDonation.expendedDonationNumber
+            ),
+            donator: expendedDonation.donator,
+            valueExpendedETH: expendedDonation.valueExpendedETH,
+            valueExpendedUSD: Number(expendedDonation.valueExpendedUSD),
+            expenditureNumber: Number(expendedDonation.expenditureNumber),
+            donationNumber: Number(expendedDonation.donationNumber),
+            platesDeployed: numPlatesToFloating(
+              expendedDonation.platesDeployed
+            ),
+          };
+        });
+      }
+
+      return uniqBy(allExpendedDonations, (o) => o.expendedDonationNumber);
     } catch (e) {
       console.log('getAllExpendedDonations redis error:', e);
 

@@ -1,4 +1,5 @@
 import validator from 'validator';
+import rikkitikkitavi, { FieldOperation } from 'rikkitikkitavi';
 
 import Config from '../config';
 import Infura from '../Infura';
@@ -138,5 +139,18 @@ export const getPageStartEnd = (page: any, pageSize: any): IPage => {
       end: 0,
       error: 'Could not get determine which page of data to return',
     };
+  }
+};
+
+export const validateObject = (
+  expression: FieldOperation[],
+  store: { [key: string]: any }
+): boolean => {
+  try {
+    return rikkitikkitavi(expression, store) || false;
+  } catch (e) {
+    console.log('error in validateObject:', e);
+
+    return false;
   }
 };

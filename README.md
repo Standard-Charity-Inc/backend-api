@@ -29,6 +29,9 @@ You'll also need [Redis](https://redis.io/) installed, and an instance of Redis 
     - [Get total ETH expenditures](#get-total-eth-expenditures)
     - [Get total number of expenditures](#get-total-number-of-expenditures)
     - [Get plates deployed](#get-plates-deployed)
+    - [Create expenditure](#create-expenditure)
+  - [Expended donations](#expended-donations)
+    - [Get expended donations](#get-expended-donations)
 
 ## Setup
 
@@ -52,12 +55,18 @@ INFURA_PROJECT_ID_DEV={Your Infura project ID for development}
 INFURA_PROJECT_SECRET_DEV={Your Infura project secret for development}
 STANDARD_CHARITY_CONTRACT_ADDRESS_DEV={Ethereum address of contract on Rinkeby testnet}
 ETH_WALLET_MNEMONIC_DEV={Mnemoic of the wallet that launched the contract on the Rinkeby testnet}
+AWS_ACCESS_KEY_ID_DEV={AWS access key for development (needs full S3 permissions)}
+AWS_SECRET_ACCESS_KEY_DEV={AWS secret access key for development (needs full S3 permissions)}
+S3_BUCKET_NAME_DEV={S3 bucket name in the us-east-1 region for development}
 
 # prod
 INFURA_PROJECT_ID_PROD={Your Infura project ID for prduction}
 INFURA_PROJECT_SECRET_PROD={Your Infura project secret for prduction}
 STANDARD_CHARITY_CONTRACT_ADDRESS_PROD={Ethereum address of contract on mainnet}
 ETH_WALLET_MNEMONIC_PROD={Mnemoic of the wallet that launched the contract on mainnet}
+AWS_ACCESS_KEY_ID_PROD={AWS access key for production (needs full S3 permissions)}
+AWS_SECRET_ACCESS_KEY_PROD={AWS secret access key for production (needs full S3 permissions)}
+S3_BUCKET_NAME_PROD={S3 bucket name in the us-east-1 region for development}
 ```
 
 Replace the items in brackets (`{}`), including the brackets themselves. For Infura-related items, create a project in Infura, and get the ID and secret from the `Keys` section in your project's settings.
@@ -762,4 +771,162 @@ Returns json data about the total number of plates deployed and average price pe
 
   ```javascript
   const res = await superagent.get(`${BASE_URL}/expenditures/plates`);
+  ```
+
+## Create expenditure
+
+Creates an expenditure. NOTE: This function may only be called by the contract owner.
+
+- **URL**
+
+  /expenditures/create
+
+- **Method:**
+
+  `POST`
+
+- **URL Params**
+
+  **Required:**
+
+  `message: String` Stringified JSON object. See example call.
+
+  `signature: String` Signed message by contract owner's wallet. See example call.
+
+- **Data Params**
+
+  `attachment: Zip file` A zip file containing two files: a video (with extension .mp4, .mov, .wmv, .avi or .flv) and a receipt PDF (with extension .pdf)
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": null,
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  **Content:**
+
+  ```javascript
+    {
+      "ok": false,
+      "payload": null,
+      "error": {
+        message: '', // There are a wide variety of error messages that can be returned from this method
+      }
+    }
+  ```
+
+- **Sample Call:**
+
+  ```javascript
+  const web3 = new Web3()
+
+  const accounts = await web3.eth.getAccounts()
+
+  const message = JSON.stringify({
+    platesDeployed: 10, // denoninated as *10, i.e. 50 = 5.0. The 10 value here represents 1 plate.
+    usd: 2500 // in cents
+  })
+
+  const signature = await web3.eth.personal.sign(message, accounts[0], '');
+
+  const res = await superagent
+    .post(`${BASE_URL}/expenditures/create?message=${message}&signature=${signature}`)
+    .attach('videoAndReceipt', 'path/to/somefile.zip'))
+      // The file must be a zip file, and it must be named 'videoAndReceipt'
+      // The file must be a zip file
+  ```
+
+## Expended donations
+
+Endpoints related to expenditures attributable to specific donations
+
+## Get expended donations
+
+Returns json array of expended donations
+
+- **URL**
+
+  /expendedDonations/all
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  `page: Int`
+
+  `pageSize: Int` Maximum of 100
+
+  **Optional:**
+
+  `address: Int` ETH wallet address
+
+  `donationNumber: Int` Specific donation number for address. Must be provided with address.
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "expendedDonations": [
+            {
+              "expendedDonationNumber": 1,
+              "donator": "0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40",
+              "valueExpendedETH": "7155570000000000",
+              "valueExpendedUSD": 337,
+              "expenditureNumber": 1,
+              "donationNumber": 2,
+              "platesDeployed": 131.8
+            }
+          ],
+          "total": 1
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching expended donations',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(
+    `${BASE_URL}/expendedDonations/all?page=1&pageSize=50`
+  );
   ```

@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 
-interface IResponse {
+export interface IResponse {
   ok: boolean;
   payload: { [key: string]: any } | null;
   error: IError | null;
 }
 
-interface IError {
+export interface IError {
   message: string;
 }
 
