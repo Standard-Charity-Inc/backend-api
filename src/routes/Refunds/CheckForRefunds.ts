@@ -55,7 +55,7 @@ class CheckForRefunds {
       await Promise.all(
         allDonations.map(async (donation) => {
           try {
-            if (donation.timestamp < timeToCheck) {
+            if (donation.timestamp > timeToCheck) {
               return;
             }
 
