@@ -15,6 +15,7 @@ import Infura from './Infura';
 import { donations } from './routes/Donations';
 import { expenditures } from './routes/Expenditures';
 import { expendedDonations } from './routes/ExpendedDonations';
+import { receipts } from './routes/Receipts';
 import { IResponse } from './routes/StandardRoute';
 import CheckForRefunds from './routes/Refunds/CheckForRefunds';
 
@@ -56,6 +57,7 @@ app.get('/', (_, res) => {
 app.use('/donations', donations);
 app.use('/expenditures', expenditures);
 app.use('/expendedDonations', expendedDonations);
+app.use('/receipts', receipts);
 
 let cronJob: CronJob | null = null;
 
@@ -101,8 +103,6 @@ const startApp = () => {
     new Infura().initializeWebsocket();
 
     await new Redis().fillCache();
-
-    new CheckForRefunds().init();
 
     cronJob = new CronJob(
       '0 4 * * *',

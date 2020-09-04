@@ -15,6 +15,7 @@ import Infura from '../../Infura';
 import CoinGecko from '../../utils/CoinGecko';
 import Redis from '../../redis';
 import { uploadToS3 } from '../../utils/s3';
+import { deleteFile } from '../../utils';
 
 const config = Config[Config.env];
 
@@ -349,21 +350,21 @@ class CreateExpenditure extends StandardRoute {
     return error;
   };
 
-  deleteFile = async (path: string): Promise<void> => {
-    try {
-      return new Promise((resolve) => {
-        unlink(path, (err) => {
-          if (err) {
-            console.log('Error deleting file in CreateExpenditure:', err);
-          }
+  // deleteFile = async (path: string): Promise<void> => {
+  //   try {
+  //     return new Promise((resolve) => {
+  //       unlink(path, (err) => {
+  //         if (err) {
+  //           console.log('Error deleting file in CreateExpenditure:', err);
+  //         }
 
-          resolve();
-        });
-      });
-    } catch (e) {
-      console.log('deleteFile error in CreateExpenditure:', e);
-    }
-  };
+  //         resolve();
+  //       });
+  //     });
+  //   } catch (e) {
+  //     console.log('deleteFile error in CreateExpenditure:', e);
+  //   }
+  // };
 
   deleteDirectory = async (path: string): Promise<void> => {
     try {
@@ -397,7 +398,7 @@ class CreateExpenditure extends StandardRoute {
                 if (lstatSync(path).isDirectory()) {
                   await this.deleteDirectory(path);
                 } else {
-                  await this.deleteFile(path);
+                  await deleteFile(path);
                 }
 
                 res();

@@ -5,3 +5,6 @@ build
 
 src/routes/Expenditures/tmp/*
 !src/routes/Expenditures/tmp/placeholder
+
+src/utils/PDFs/tmp/*
+!src/utils/PDFs/tmp/placeholder

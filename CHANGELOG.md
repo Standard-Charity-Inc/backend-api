@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [0.0.14] - 2020-09-04
+
+### Added
+
+- Receipt fetching
+- PDF builder
+- Expenditure logging
+
 ## [0.0.13] - 2020-08-27
 
 ### Added

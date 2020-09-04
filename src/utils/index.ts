@@ -1,5 +1,6 @@
 import validator from 'validator';
 import rikkitikkitavi, { FieldOperation } from 'rikkitikkitavi';
+import { unlink } from 'fs';
 
 import Config from '../config';
 import Infura from '../Infura';
@@ -152,5 +153,21 @@ export const validateObject = (
     console.log('error in validateObject:', e);
 
     return false;
+  }
+};
+
+export const deleteFile = async (path: string): Promise<void> => {
+  try {
+    return new Promise((resolve) => {
+      unlink(path, (err) => {
+        if (err) {
+          console.log('Error deleting file in CreateExpenditure:', err);
+        }
+
+        resolve();
+      });
+    });
+  } catch (e) {
+    console.log('deleteFile error in CreateExpenditure:', e);
   }
 };

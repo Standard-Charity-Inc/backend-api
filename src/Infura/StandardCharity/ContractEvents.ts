@@ -529,7 +529,13 @@ class ContractEvents extends ABI {
         return false;
       }
 
+      console.log('\n\n')
+
+      console.log('updatedDonation:', updatedDonation);
+
       const allDonations = await this.redis.getAllDonations();
+
+      console.log('allDonations:', allDonations);
 
       let updatedDonations: IDonation[] = [];
 
@@ -546,9 +552,13 @@ class ContractEvents extends ABI {
 
       updatedDonations = [...updatedDonations, updatedDonation];
 
+      console.log('updatedDonations:', updatedDonations);
+
       const stringifiedDonations = updatedDonations.map((d) =>
         JSON.stringify(d)
       );
+
+      console.log('\n\n')
 
       await deleteKey(RedisKeys.ALL_DONATIONS);
 

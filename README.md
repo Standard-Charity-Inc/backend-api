@@ -32,6 +32,8 @@ You'll also need [Redis](https://redis.io/) installed, and an instance of Redis 
     - [Create expenditure](#create-expenditure)
   - [Expended donations](#expended-donations)
     - [Get expended donations](#get-expended-donations)
+  - [Receipts](#receipts)
+    - [Get donation receipt](#get-donation-receipt)
 
 ## Setup
 
@@ -58,6 +60,7 @@ ETH_WALLET_MNEMONIC_DEV={Mnemoic of the wallet that launched the contract on the
 AWS_ACCESS_KEY_ID_DEV={AWS access key for development (needs full S3 permissions)}
 AWS_SECRET_ACCESS_KEY_DEV={AWS secret access key for development (needs full S3 permissions)}
 S3_BUCKET_NAME_DEV={S3 bucket name in the us-east-1 region for development}
+S3_BUCKET_URL_DEV={URL for S3 bucket for development (e.g. behind Cloudfront)}
 
 # prod
 INFURA_PROJECT_ID_PROD={Your Infura project ID for prduction}
@@ -67,6 +70,7 @@ ETH_WALLET_MNEMONIC_PROD={Mnemoic of the wallet that launched the contract on ma
 AWS_ACCESS_KEY_ID_PROD={AWS access key for production (needs full S3 permissions)}
 AWS_SECRET_ACCESS_KEY_PROD={AWS secret access key for production (needs full S3 permissions)}
 S3_BUCKET_NAME_PROD={S3 bucket name in the us-east-1 region for development}
+S3_BUCKET_URL_PROD={URL for S3 bucket for production (e.g. behind Cloudfront)}
 ```
 
 Replace the items in brackets (`{}`), including the brackets themselves. For Infura-related items, create a project in Infura, and get the ID and secret from the `Keys` section in your project's settings.
@@ -928,5 +932,81 @@ Returns json array of expended donations
   ```javascript
   const res = await superagent.get(
     `${BASE_URL}/expendedDonations/all?page=1&pageSize=50`
+  );
+  ```
+
+## Receipts
+
+Endpoints related to receipts
+
+## Get donation receipt
+
+Returns a URL to download a receipt for a given Ethereum address between two dates
+
+- **URL**
+
+  /receipts
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  `beginTimestamp: Int` In milliseconds
+
+  `endTimestamp: Int` In milliseconds
+
+  `donorName: String` URL encoded name of donor
+
+  `address: String` Ethereum address of donor
+
+  **Optional:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "url": "https://assets.standardcharity.org/customerReceipts/tfAeQ9CA7hvQMjXGEJy66d.pdf"
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: '', // A wide variety of error messages may be returned from this endpoint
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(
+    `${BASE_URL}/receipts?beginTimestamp=1578098293000&endTimestamp=1599192440000&donorName=Fred%20Jones&address=0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40`
   );
   ```

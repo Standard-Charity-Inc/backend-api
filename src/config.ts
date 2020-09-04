@@ -26,6 +26,7 @@ interface IPlatform {
     secretAccessKey: string;
     s3: {
       bucketName: string;
+      bucketUrl: string;
     };
   };
 }
@@ -81,6 +82,7 @@ const config: IConfig = {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_DEV as string,
       s3: {
         bucketName: process.env.S3_BUCKET_NAME_DEV as string,
+        bucketUrl: process.env.S3_BUCKET_URL_DEV as string,
       },
     },
   },
@@ -119,6 +121,7 @@ const config: IConfig = {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_PROD as string,
       s3: {
         bucketName: process.env.S3_BUCKET_NAME_PROD as string,
+        bucketUrl: process.env.S3_BUCKET_URL_PROD as string,
       },
     },
   },
