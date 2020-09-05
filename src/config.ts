@@ -29,6 +29,11 @@ interface IPlatform {
       bucketUrl: string;
     };
   };
+  vimeo: {
+    clientId: string;
+    token: string;
+    clientSecret: string;
+  };
 }
 
 interface IConfig {
@@ -85,6 +90,11 @@ const config: IConfig = {
         bucketUrl: process.env.S3_BUCKET_URL_DEV as string,
       },
     },
+    vimeo: {
+      clientId: process.env.VIMEO_CLIENT_ID_DEV as string,
+      token: process.env.VIMEO_TOKEN_DEV as string,
+      clientSecret: process.env.VIMEO_CLIENT_SECRET_DEV as string,
+    },
   },
   prod: {
     port: 3002,
@@ -123,6 +133,11 @@ const config: IConfig = {
         bucketName: process.env.S3_BUCKET_NAME_PROD as string,
         bucketUrl: process.env.S3_BUCKET_URL_PROD as string,
       },
+    },
+    vimeo: {
+      clientId: process.env.VIMEO_CLIENT_ID_PROD as string,
+      token: process.env.VIMEO_TOKEN_PROD as string,
+      clientSecret: process.env.VIMEO_CLIENT_SECRET_PROD as string,
     },
   },
 };

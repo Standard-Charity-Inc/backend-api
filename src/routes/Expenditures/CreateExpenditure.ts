@@ -15,7 +15,8 @@ import Infura from '../../Infura';
 import CoinGecko from '../../utils/CoinGecko';
 import Redis from '../../redis';
 import { uploadToS3 } from '../../utils/s3';
-import { deleteFile } from '../../utils';
+import { deleteFile, numPlatesToFloating } from '../../utils';
+import Vimeo from '../../utils/Vimeo';
 
 const config = Config[Config.env];
 
@@ -222,7 +223,18 @@ class CreateExpenditure extends StandardRoute {
         });
       }
 
-      // TO DO: Upload video file here
+      const vimeoRes = await new Vimeo().upload(
+        `${unzipFileRes.tmpDirPath}/${videoFile.name}`,
+        `Standard Charity deploys ${numPlatesToFloating(
+          this.expenditurePlatesDeployed.toString()
+        )} plates of food`
+      );
+
+      if (vimeoRes.error || !vimeoRes.uri) {
+        return this.sendResponse(false, 500, null, {
+          message: vimeoRes.error || 'The video could not be uploaded to Vimeo',
+        });
+      }
 
       const contractBalance = await this.redis.getStandardCharityContractBalance();
 
@@ -242,6 +254,8 @@ class CreateExpenditure extends StandardRoute {
 
       console.log('expenditureCreated:', expenditureCreated);
 
+      const videoUrlParts = vimeoRes.uri.split('/');
+
       if (!expenditureCreated) {
         return this.sendExpenditureError(false, 400, null, {
           message: 'The expenditure could not be created via Infura',
@@ -250,7 +264,17 @@ class CreateExpenditure extends StandardRoute {
 
       await this.deleteAllTempFiles();
 
-      return this.sendResponse(true, 200, null, null);
+      return this.sendResponse(
+        true,
+        200,
+        {
+          videoHash: videoFile.hash.toString(),
+          vimeoUrl: `https://vimeo.com/${
+            videoUrlParts[videoUrlParts.length - 1]
+          }`,
+        },
+        null
+      );
     } catch (e) {
       console.log('CreateExpenditure error:', e);
 
@@ -349,22 +373,6 @@ class CreateExpenditure extends StandardRoute {
 
     return error;
   };
-
-  // deleteFile = async (path: string): Promise<void> => {
-  //   try {
-  //     return new Promise((resolve) => {
-  //       unlink(path, (err) => {
-  //         if (err) {
-  //           console.log('Error deleting file in CreateExpenditure:', err);
-  //         }
-
-  //         resolve();
-  //       });
-  //     });
-  //   } catch (e) {
-  //     console.log('deleteFile error in CreateExpenditure:', e);
-  //   }
-  // };
 
   deleteDirectory = async (path: string): Promise<void> => {
     try {

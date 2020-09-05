@@ -61,6 +61,9 @@ AWS_ACCESS_KEY_ID_DEV={AWS access key for development (needs full S3 permissions
 AWS_SECRET_ACCESS_KEY_DEV={AWS secret access key for development (needs full S3 permissions)}
 S3_BUCKET_NAME_DEV={S3 bucket name in the us-east-1 region for development}
 S3_BUCKET_URL_DEV={URL for S3 bucket for development (e.g. behind Cloudfront)}
+VIMEO_CLIENT_ID_DEV={Client ID for Vimeo API in development}
+VIMEO_TOKEN_DEV={Generated token for Vimeo API in development}
+VIMEO_CLIENT_SECRET_DEV={Client secret for Vimeo API in development}
 
 # prod
 INFURA_PROJECT_ID_PROD={Your Infura project ID for prduction}
@@ -69,8 +72,11 @@ STANDARD_CHARITY_CONTRACT_ADDRESS_PROD={Ethereum address of contract on mainnet}
 ETH_WALLET_MNEMONIC_PROD={Mnemoic of the wallet that launched the contract on mainnet}
 AWS_ACCESS_KEY_ID_PROD={AWS access key for production (needs full S3 permissions)}
 AWS_SECRET_ACCESS_KEY_PROD={AWS secret access key for production (needs full S3 permissions)}
-S3_BUCKET_NAME_PROD={S3 bucket name in the us-east-1 region for development}
+S3_BUCKET_NAME_PROD={S3 bucket name in the us-east-1 region for production}
 S3_BUCKET_URL_PROD={URL for S3 bucket for production (e.g. behind Cloudfront)}
+VIMEO_CLIENT_ID_PROD={Client ID for Vimeo API in production}
+VIMEO_TOKEN_PROD={Generated token for Vimeo API in production}
+VIMEO_CLIENT_SECRET_PROD={Client secret for Vimeo API in production}
 ```
 
 Replace the items in brackets (`{}`), including the brackets themselves. For Infura-related items, create a project in Infura, and get the ID and secret from the `Keys` section in your project's settings.
@@ -810,7 +816,10 @@ Creates an expenditure. NOTE: This function may only be called by the contract o
     ```javascript
       {
         "ok": true,
-        "payload": null,
+        "payload": {
+          "videoHash": "2909569815",
+          "vimeoUrl": "https://vimeo.com/454949147"
+        },
         "error": null
       }
     ```

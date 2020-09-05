@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.0.15] - 2020-09-04
+
+### Added
+
+- Video uploads to Vimeo
+
 ## [0.0.14] - 2020-09-04
 
 ### Added

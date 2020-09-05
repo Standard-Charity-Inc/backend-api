@@ -1,6 +1,6 @@
 {
   "name": "backend-api",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Backend API resources for Standard Charity",
   "main": "build/app.js",
   "scripts": {
@@ -44,6 +44,7 @@
     "short-uuid": "^3.1.1",
     "superagent": "^6.0.0",
     "validator": "^13.1.1",
+    "vimeo": "^2.1.1",
     "web3": "^1.2.11",
     "xxhash": "^0.3.0"
   },
@@ -62,6 +63,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/superagent": "^4.1.9",
     "@types/validator": "^13.1.0",
+    "@types/vimeo": "^2.1.2",
     "prettier": "^2.0.5",
     "pretty-quick": "^2.0.1",
     "ts-node-dev": "^1.0.0-pre.56",
