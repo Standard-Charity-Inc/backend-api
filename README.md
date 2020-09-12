@@ -33,7 +33,9 @@ You'll also need [Redis](https://redis.io/) installed, and an instance of Redis 
   - [Expended donations](#expended-donations)
     - [Get expended donations](#get-expended-donations)
   - [Receipts](#receipts)
-    - [Get donation receipt](#get-donation-receipt) -[Marketing](#marketing) -[Subscribe](#subscribe)
+    - [Get donation receipt](#get-donation-receipt)
+  - [Marketing](#marketing)
+    - [Subscribe](#subscribe)
 
 ## Setup
 
