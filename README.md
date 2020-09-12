@@ -33,7 +33,7 @@ You'll also need [Redis](https://redis.io/) installed, and an instance of Redis 
   - [Expended donations](#expended-donations)
     - [Get expended donations](#get-expended-donations)
   - [Receipts](#receipts)
-    - [Get donation receipt](#get-donation-receipt)
+    - [Get donation receipt](#get-donation-receipt) -[Marketing](#marketing) -[Subscribe](#subscribe)
 
 ## Setup
 
@@ -64,6 +64,9 @@ S3_BUCKET_URL_DEV={URL for S3 bucket for development (e.g. behind Cloudfront)}
 VIMEO_CLIENT_ID_DEV={Client ID for Vimeo API in development}
 VIMEO_TOKEN_DEV={Generated token for Vimeo API in development}
 VIMEO_CLIENT_SECRET_DEV={Client secret for Vimeo API in development}
+MAILCHIMP_API_KEY_DEV={Mailchimp API key for development}
+MAILCHIMP_SERVER_PREFIX_DEV={Mailchimp server prefix for development}
+MAILCHIMP_LIST_NAME_DEV={Mailchimp list name for development}
 
 # prod
 INFURA_PROJECT_ID_PROD={Your Infura project ID for prduction}
@@ -77,6 +80,9 @@ S3_BUCKET_URL_PROD={URL for S3 bucket for production (e.g. behind Cloudfront)}
 VIMEO_CLIENT_ID_PROD={Client ID for Vimeo API in production}
 VIMEO_TOKEN_PROD={Generated token for Vimeo API in production}
 VIMEO_CLIENT_SECRET_PROD={Client secret for Vimeo API in production}
+MAILCHIMP_API_KEY_PROD={Mailchimp API key for production}
+MAILCHIMP_SERVER_PREFIX_PROD={Mailchimp server prefix for production}
+MAILCHIMP_LIST_NAME_PROD={Mailchimp list name for production}
 ```
 
 Replace the items in brackets (`{}`), including the brackets themselves. For Infura-related items, create a project in Infura, and get the ID and secret from the `Keys` section in your project's settings.
@@ -856,7 +862,6 @@ Creates an expenditure. NOTE: This function may only be called by the contract o
     .post(`${BASE_URL}/expenditures/create?message=${message}&signature=${signature}`)
     .attach('videoAndReceipt', 'path/to/somefile.zip'))
       // The file must be a zip file, and it must be named 'videoAndReceipt'
-      // The file must be a zip file
   ```
 
 ## Expended donations
@@ -1018,4 +1023,74 @@ Returns a URL to download a receipt for a given Ethereum address between two dat
   const res = await superagent.get(
     `${BASE_URL}/receipts?beginTimestamp=1578098293000&endTimestamp=1599192440000&donorName=Fred%20Jones&address=0x7D6c6B479b247f3DEC1eDfcC4fAf56c5Ff9A5F40`
   );
+  ```
+
+## Marketing
+
+Endpoints related to marketing
+
+## Subscribe
+
+Subscribe an individual to Mailchimp
+
+- **URL**
+
+  /marketing/createSubscriber
+
+- **Method:**
+
+  `POST`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  `firstName: String`
+
+  `lastName: String`
+
+  `email: String`
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": null,
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  **Content:**
+
+  ```javascript
+    {
+      "ok": false,
+      "payload": null,
+      "error": {
+        message: '', // There are a wide variety of error messages that can be returned from this method -- many from Mailchimp directly
+      }
+    }
+  ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent
+    .post(`${BASE_URL}/marketing/createSubscriber`)
+    .send({
+      firstName: 'Fred',
+      lastName: 'Jones',
+      email: 'fred@yopmail.com',
+    });
   ```

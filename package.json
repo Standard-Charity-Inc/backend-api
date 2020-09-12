@@ -1,6 +1,6 @@
 {
   "name": "backend-api",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Backend API resources for Standard Charity",
   "main": "build/app.js",
   "scripts": {
@@ -23,6 +23,7 @@
   "author": "John Wall <john@ealdorman.com>",
   "license": "MIT",
   "dependencies": {
+    "@mailchimp/mailchimp_marketing": "^3.0.15",
     "@truffle/contract": "^4.2.17",
     "adm-zip": "^0.4.16",
     "aws-sdk": "^2.742.0",

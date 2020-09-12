@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.0.16] - 2020-09-11
+
+### Added
+
+- Mailchimp integration and endpoint
+
 ## [0.0.15] - 2020-09-04
 
 ### Added

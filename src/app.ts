@@ -16,6 +16,7 @@ import { donations } from './routes/Donations';
 import { expenditures } from './routes/Expenditures';
 import { expendedDonations } from './routes/ExpendedDonations';
 import { receipts } from './routes/Receipts';
+import { marketing } from './routes/Marketing';
 import { IResponse } from './routes/StandardRoute';
 import CheckForRefunds from './routes/Refunds/CheckForRefunds';
 
@@ -58,6 +59,7 @@ app.use('/donations', donations);
 app.use('/expenditures', expenditures);
 app.use('/expendedDonations', expendedDonations);
 app.use('/receipts', receipts);
+app.use('/marketing', marketing);
 
 let cronJob: CronJob | null = null;
 

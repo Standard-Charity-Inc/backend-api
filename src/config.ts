@@ -34,6 +34,15 @@ interface IPlatform {
     token: string;
     clientSecret: string;
   };
+  mailchimp: {
+    api: {
+      apiKey: string;
+      serverPrefix: string;
+    };
+    list: {
+      name: string;
+    };
+  };
 }
 
 interface IConfig {
@@ -95,6 +104,15 @@ const config: IConfig = {
       token: process.env.VIMEO_TOKEN_DEV as string,
       clientSecret: process.env.VIMEO_CLIENT_SECRET_DEV as string,
     },
+    mailchimp: {
+      api: {
+        apiKey: process.env.MAILCHIMP_API_KEY_DEV as string,
+        serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX_DEV as string,
+      },
+      list: {
+        name: process.env.MAILCHIMP_LIST_NAME_DEV as string,
+      },
+    },
   },
   prod: {
     port: 3002,
@@ -138,6 +156,15 @@ const config: IConfig = {
       clientId: process.env.VIMEO_CLIENT_ID_PROD as string,
       token: process.env.VIMEO_TOKEN_PROD as string,
       clientSecret: process.env.VIMEO_CLIENT_SECRET_PROD as string,
+    },
+    mailchimp: {
+      api: {
+        apiKey: process.env.MAILCHIMP_API_KEY_PROD as string,
+        serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX_PROD as string,
+      },
+      list: {
+        name: process.env.MAILCHIMP_LIST_NAME_PROD as string,
+      },
     },
   },
 };
