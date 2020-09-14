@@ -6,9 +6,9 @@ import express from 'express';
 import fileUpload from 'express-fileupload';
 import AWS from 'aws-sdk';
 import { CronJob } from 'cron';
+import cors from 'cors';
 
 import Config from './config';
-import { setCors } from './middleware';
 import Redis from './redis';
 import { init as initRedis } from './redis/instance';
 import Infura from './Infura';
@@ -27,7 +27,7 @@ const app: express.Application = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: '500mb' }));
 app.set('trust proxy', 1);
-app.use(setCors);
+app.use(cors());
 
 const maxUploadSizeMb = 500;
 
