@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.0.18] - 2020-09-15
+
+### Added
+
+- Contract balance endpoint
+
 ## [0.0.17] - 2020-09-13
 
 ### Changed

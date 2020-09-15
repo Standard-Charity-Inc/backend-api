@@ -36,6 +36,8 @@ You'll also need [Redis](https://redis.io/) installed, and an instance of Redis 
     - [Get donation receipt](#get-donation-receipt)
   - [Marketing](#marketing)
     - [Subscribe](#subscribe)
+  - [Contract](#contract)
+    - [Get contract balance](#get-contract-balance)
 
 ## Setup
 
@@ -1095,4 +1097,68 @@ Subscribe an individual to Mailchimp
       lastName: 'Jones',
       email: 'fred@yopmail.com',
     });
+  ```
+
+## Contract
+
+Endpoints related to the contract
+
+## Get contract balance
+
+Returns json data about the contract's current balance denominated in wei
+
+- **URL**
+
+  /contract/balance
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  None
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": true,
+        "payload": {
+          "contractBalance": "200000000000000000" // in wei
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching the contract balance',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(`${BASE_URL}/contract/balance`);
   ```
