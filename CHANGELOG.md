@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.0.19] - 2020-09-17
+
+### Changed
+
+- Version bump
+
 ## [0.0.18] - 2020-09-15
 
 ### Added
