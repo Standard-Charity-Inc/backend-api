@@ -248,7 +248,7 @@ class Helpers {
     try {
       const allPendingExpendedDonations = await this.redis.getAllPendingExpendedDonations();
 
-      let updatedPendingExpendedDonations: IPendingExpendedDonation[] = [];
+      const updatedPendingExpendedDonations: IPendingExpendedDonation[] = [];
 
       allPendingExpendedDonations.map((p) => {
         if (
@@ -324,7 +324,7 @@ class Helpers {
     try {
       const allPendingRefunds = await this.redis.getAllPendingRefunds();
 
-      let updatedPendingRefunds: IPendingRefund[] = [];
+      const updatedPendingRefunds: IPendingRefund[] = [];
 
       allPendingRefunds.map((p) => {
         if (

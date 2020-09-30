@@ -165,7 +165,7 @@ Returns json array of donations
 
   `page: Int`
 
-  `pageSize: Int` Maximum of 100
+  `pageSize: Int` Maximum of 100000
 
   **Optional:**
 
@@ -538,7 +538,7 @@ Returns json array of expenditures
 
   `page: Int`
 
-  `pageSize: Int` Maximum of 100
+  `pageSize: Int` Maximum of 100000
 
   **Optional:**
 
@@ -890,7 +890,7 @@ Returns json array of expended donations
 
   `page: Int`
 
-  `pageSize: Int` Maximum of 100
+  `pageSize: Int` Maximum of 100000
 
   **Optional:**
 

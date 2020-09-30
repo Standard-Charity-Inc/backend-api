@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.0.20] - 2020-09-30
+
+### Changed
+
+- Bump max array lengths to 100,000
+
 ## [0.0.19] - 2020-09-17
 
 ### Changed

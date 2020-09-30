@@ -529,7 +529,7 @@ class ContractEvents extends ABI {
         return false;
       }
 
-      console.log('\n\n')
+      console.log('\n\n');
 
       console.log('updatedDonation:', updatedDonation);
 
@@ -558,7 +558,7 @@ class ContractEvents extends ABI {
         JSON.stringify(d)
       );
 
-      console.log('\n\n')
+      console.log('\n\n');
 
       await deleteKey(RedisKeys.ALL_DONATIONS);
 

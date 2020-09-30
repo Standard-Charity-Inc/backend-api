@@ -11,7 +11,9 @@
     "object-literal-sort-keys": false,
     "quotemark": [true, "single"],
     "prettier": true,
-    "no-var-requires": false
+    "no-var-requires": false,
+    "variable-name": false,
+    "only-arrow-functions": false
   },
   "rulesDirectory": [],
   "linterOptions": {
