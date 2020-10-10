@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.0.21] - 2020-10-10
+
+### Added
+
+- Grouped donations endpoint
+
 ## [0.0.20] - 2020-09-30
 
 ### Changed

@@ -24,6 +24,7 @@ You'll also need [Redis](https://redis.io/) installed, and an instance of Redis 
     - [Get latest donation](#get-latest-donation)
     - [Get total ETH donations](#get-total-eth-donations)
     - [Get total number of donations](#get-total-number-of-donations)
+    - [Get grouped donations](#get-grouped-donations)
   - [Expenditures](#expenditures)
     - [Get expenditures](#get-expenditures)
     - [Get total ETH expenditures](#get-total-eth-expenditures)
@@ -514,6 +515,101 @@ Returns json data about the total count of donations to the contract
 
   ```javascript
   const res = await superagent.get(`${BASE_URL}/donations/totalNumber`);
+  ```
+
+## Get grouped donations
+
+Returns json array of donations gouped by a given element. Sorting is optional.
+
+- **URL**
+
+  /donations/grouped
+
+- **Method:**
+
+  `GET`
+
+- **URL Params**
+
+  **Required:**
+
+  `page: Int`
+
+  `pageSize: Int` Maximum of 100000
+
+  `by: String` Must be one of: donator, value, numExpenditures, valueExpendedETH, valueExpendedUSD, valueRefundedETH
+
+  **Optional:**
+
+  `sortBy: String` Must be one of: totalValue, totalValueExpendedETH, totalValueExpendedUSD, totalValueRefundedETH, totalNumExpenditures
+
+  `sortDir: String` Direction of the sort. Must be one of: asc, desc
+
+- **Data Params**
+
+  None
+
+- **Success Response:**
+
+  - **Status code:** 200
+
+    **Content:**
+
+    ```javascript
+     {
+        "ok": true,
+        "payload": {
+          "groupedDonations": [
+            {
+              "donations": [
+                {
+                  "donator": "0x567157ffD7012c19f9bD900A9b280D839041acd4",
+                  "value": "160000000000000000",
+                  "timestamp": 1601685704,
+                  "valueExpendedETH": "160000000000000000",
+                  "valueExpendedUSD": 5664,
+                  "valueRefundedETH": "0",
+                  "donationNumber": 1,
+                  "numExpenditures": 1
+                }
+              ],
+              "donator": "0x567157ffD7012c19f9bD900A9b280D839041acd4",
+              "totalValue": "160000000000000000",
+              "totalValueExpendedETH": "160000000000000000",
+              "totalValueExpendedUSD": 5664,
+              "totalValueRefundedETH": "0",
+              "totalNumExpenditures": 1
+            },
+            ...
+          ],
+          "total": 5
+        },
+        "error": null
+      }
+    ```
+
+- **Error Response:**
+
+  - **Code:** 500 SERVER ERROR
+
+    **Content:**
+
+    ```javascript
+      {
+        "ok": false,
+        "payload": null,
+        "error": {
+          message: 'There was a server error while fetching grouped donations',
+        }
+      }
+    ```
+
+- **Sample Call:**
+
+  ```javascript
+  const res = await superagent.get(
+    `${BASE_URL}/donations/grouped?page=1&pageSize=50&by=donator&sortBy=totalValue&sortDir=desc`
+  );
   ```
 
 ## Expenditures
