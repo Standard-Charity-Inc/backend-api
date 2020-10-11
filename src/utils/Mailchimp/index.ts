@@ -73,19 +73,6 @@ class Mailchimp {
 
       console.log('e.resposne:', e.response.body);
 
-      if (
-        e &&
-        e.response &&
-        e.response &&
-        e.response.body &&
-        e.response.body.detail
-      ) {
-        return {
-          ok: false,
-          error: e.response.body.detail,
-        };
-      }
-
       return {
         ok: false,
         error: 'The contact could not be added',

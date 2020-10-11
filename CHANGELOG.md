@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.0.22] - 2020-10-10
+
+### Changed
+
+- Contract address
+
 ## [0.0.21] - 2020-10-10
 
 ### Added
