@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.0] - 2020-10-14
+
+### Added
+
+- Production contract
+
 ## [0.0.22] - 2020-10-10
 
 ### Changed

@@ -141,7 +141,7 @@ const config: IConfig = {
     },
     ethereum: {
       wallet: process.env.ETH_WALLET_MNEMONIC_PROD
-        ? mnemonicToWallet(process.env.ETH_WALLET_MNEUMONIC_PROD as string)
+        ? mnemonicToWallet(process.env.ETH_WALLET_MNEMONIC_PROD as string)
         : null,
     },
     aws: {
