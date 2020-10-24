@@ -638,7 +638,9 @@ Returns json array of expenditures
 
   **Optional:**
 
-  None
+  `startAtTimestamp: Int` In seconds
+
+  `endAtTimestamp: Int` In seconds
 
 - **Data Params**
 
@@ -993,6 +995,8 @@ Returns json array of expended donations
   `address: Int` ETH wallet address
 
   `donationNumber: Int` Specific donation number for address. Must be provided with address.
+
+  `expenditureNumber: Int`
 
 - **Data Params**
 

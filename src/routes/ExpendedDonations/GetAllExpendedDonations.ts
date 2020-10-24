@@ -8,7 +8,13 @@ import { getPageStartEnd } from '../../utils';
 class GetAllExpendedDonations extends StandardRoute {
   public init = async (): Promise<Response> => {
     try {
-      const { page, pageSize, address, donationNumber } = this.req.query;
+      const {
+        page,
+        pageSize,
+        address,
+        donationNumber,
+        expenditureNumber,
+      } = this.req.query;
 
       const { error, start, end } = getPageStartEnd(page, pageSize);
 
@@ -40,6 +46,19 @@ class GetAllExpendedDonations extends StandardRoute {
         expendedDonations = filter(
           expendedDonations,
           (o) => o.donationNumber === Number(donationNumber)
+        );
+      }
+
+      if (expenditureNumber) {
+        if (isNaN(Number(expenditureNumber))) {
+          return this.sendResponse(false, 400, null, {
+            message: 'The expenditure number must be an integer',
+          });
+        }
+
+        expendedDonations = filter(
+          expendedDonations,
+          (o) => o.expenditureNumber === Number(expenditureNumber)
         );
       }
 

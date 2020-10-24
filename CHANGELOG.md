@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.1.1] - 2020-10-23
+
+### Added
+
+- Timestamp filtering for expenditures
+- Filter expended donations by expenditure number
+
 ## [0.1.0] - 2020-10-14
 
 ### Added

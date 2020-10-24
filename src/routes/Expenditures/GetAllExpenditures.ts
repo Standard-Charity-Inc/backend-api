@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { orderBy, slice } from 'lodash';
+import { orderBy, slice, filter } from 'lodash';
 
 import StandardRoute from '../StandardRoute';
 import Redis from '../../redis';
@@ -8,7 +8,12 @@ import { getPageStartEnd } from '../../utils';
 class GetAllExpenditures extends StandardRoute {
   public init = async (): Promise<Response> => {
     try {
-      const { page, pageSize } = this.req.query;
+      const {
+        page,
+        pageSize,
+        startAtTimestamp,
+        endAtTimestamp,
+      } = this.req.query;
 
       const { error, start, end } = getPageStartEnd(page, pageSize);
 
@@ -18,10 +23,36 @@ class GetAllExpenditures extends StandardRoute {
         });
       }
 
-      const expenditures = orderBy(
+      let expenditures = orderBy(
         await new Redis().getAllExpenditures(),
         (o) => o.timestamp
       );
+
+      if (startAtTimestamp) {
+        if (isNaN(Number(startAtTimestamp))) {
+          return this.sendResponse(false, 400, null, {
+            message: 'The startAtTimestamp value must be an integer',
+          });
+        }
+
+        expenditures = filter(
+          expenditures,
+          (o) => o.timestamp >= Number(startAtTimestamp)
+        );
+      }
+
+      if (endAtTimestamp) {
+        if (isNaN(Number(endAtTimestamp))) {
+          return this.sendResponse(false, 400, null, {
+            message: 'The endAtTimestamp value must be an integer',
+          });
+        }
+
+        expenditures = filter(
+          expenditures,
+          (o) => o.timestamp <= Number(endAtTimestamp)
+        );
+      }
 
       return this.sendResponse(
         true,
