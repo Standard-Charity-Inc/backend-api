@@ -5,11 +5,16 @@ import GetTotalNumberOfExpenditures from './GetTotalNumberOfExpenditures';
 import GetAllExpenditures from './GetAllExpenditures';
 import GetPlatesDeployed from './GetPlatesDeployed';
 import CreateExpenditure from './CreateExpenditure';
+import GetTotalUsdExpenditures from './GetTotalUsdExependitures';
 
 export const expenditures = Router();
 
 expenditures.get('/totalEth', (req, res, next) =>
   new GetTotalEthExpenditures(req, res, next).init()
+);
+
+expenditures.get('/totalUsd', (req, res, next) =>
+  new GetTotalUsdExpenditures(req, res, next).init()
 );
 
 expenditures.get('/totalNumber', (req, res, next) =>
