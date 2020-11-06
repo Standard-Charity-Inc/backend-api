@@ -2,8 +2,6 @@
 
 > Backend resources for Standard Charity
 
-**⚠️ This API is under development. It is not ready for production deployment.**
-
 This Node.js/Express API, written in Typescript, is the primary backend package for Standard Charity.
 
 You'll need [Node.js](https://nodejs.org/en/download/) installed.
