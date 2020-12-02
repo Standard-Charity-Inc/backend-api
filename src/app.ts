@@ -26,11 +26,11 @@ const config = Config[Config.env];
 const app: express.Application = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json({ limit: '500mb' }));
+app.use(bodyParser.json({ limit: '995mb' }));
 app.set('trust proxy', 1);
 app.use(cors());
 
-const maxUploadSizeMb = 500;
+const maxUploadSizeMb = 995;
 
 app.use(
   fileUpload({

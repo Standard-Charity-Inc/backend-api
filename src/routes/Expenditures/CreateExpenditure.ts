@@ -55,226 +55,238 @@ class CreateExpenditure extends StandardRoute {
 
       this.redis = new Redis();
 
-      if (await this.redis.getIsCreatingExpenditure()) {
-        return this.sendResponse(false, 400, null, {
-          message:
-            'The system is processing a previous expenditure. Please try again in a few minutes.',
-        });
-      }
-
-      if (await this.redis.getIsCreatingRefunds()) {
-        return this.sendResponse(false, 400, null, {
-          message:
-            'The system is processing refunds. Please try again in a few minutes.',
-        });
-      }
-
-      await this.redis.setIsCreatingExpenditure(true);
-
-      const { files } = this.req;
-
-      if (!files || Object.keys(files).length === 0) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'No files were included with the request',
-        });
-      }
-
-      const params: IRequestBody = this.req.query;
-
-      if (!params.message) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'Param message was not included in request',
-        });
-      }
-
-      if (!params.signature) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'Param signature was not included in request',
-        });
-      }
-
-      if (!config.ethereum.wallet) {
-        return this.sendExpenditureError(false, 500, null, {
-          message:
-            'There was a server error while creating expenditure: could not get ETH wallet',
-        });
-      }
-
-      const isVerified = isMessageVerified(
-        params.message,
-        params.signature,
-        config.ethereum.wallet.address
-      );
-
-      if (!isVerified) {
-        return this.sendExpenditureError(false, 400, null, {
-          message:
-            'The message and signature provided could not be verified. Only the address of the contract owner can be used to sign the message.',
-        });
-      }
-
-      let parsedMessage: IRequestMessage | null = null;
-
-      try {
-        parsedMessage = JSON.parse(params.message);
-      } catch (e) {
-        console.log('parse message error in CreateExpenditure:', e);
-      }
-
-      if (!parsedMessage) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'The message provided in the request could not be parsed',
-        });
-      }
-
-      if (
-        !parsedMessage.platesDeployed ||
-        isNaN(Number(parsedMessage.platesDeployed))
-      ) {
-        return this.sendExpenditureError(false, 400, null, {
-          message:
-            'The platesDeployed value in the message was not provided or was invalid',
-        });
-      }
-
-      this.expenditurePlatesDeployed = Number(parsedMessage.platesDeployed);
-
-      if (!parsedMessage.usd || isNaN(Number(parsedMessage.usd))) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'The usd in the message was not provided or was invalid',
-        });
-      }
-
-      this.expenditureUsd = Number(parsedMessage.usd);
-
-      const videoAndReceiptFile: any = files.videoAndReceipt;
-
-      if (!videoAndReceiptFile || !videoAndReceiptFile.tempFilePath) {
-        return this.sendExpenditureError(false, 400, null, {
-          message:
-            'A zipped file named videoAndReceipt that contains a video file and receipt PDF must be included in the request',
-        });
-      }
-
-      const ethPrice = await new CoinGecko().getEthPrice();
-
-      if (!ethPrice) {
-        return this.sendExpenditureError(false, 500, null, {
-          message:
-            'A server error occured while creating the expenditure. Could not get the ETH price.',
-        });
-      }
-
-      const ethExpended = this.expenditureUsd / 100 / ethPrice;
-
-      const expenditureWei = ethToWei(ethExpended.toString());
-
-      if (!expenditureWei || !expenditureWei.toString()) {
-        return this.sendExpenditureError(false, 500, null, {
-          message:
-            'Could not convert ETH to wei for the purpose of creating the expenditure',
-        });
-      }
-
-      this.expenditureWei = expenditureWei;
-
-      const unzipFileRes = await this.unzipFile(
-        videoAndReceiptFile.tempFilePath
-      );
-
-      if (typeof unzipFileRes === 'string') {
-        return this.sendExpenditureError(false, 400, null, {
-          message: unzipFileRes,
-        });
-      }
-
-      const { unzippedFiles } = unzipFileRes;
-
-      if (!unzippedFiles) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'Could not unzip file to create expenditure',
-        });
-      }
-
-      const videoFile = find(unzippedFiles, (o) => o.type === 'video');
-
-      if (!videoFile) {
-        return this.sendExpenditureError(false, 500, null, {
-          message: 'The video file could not be parsed',
-        });
-      }
-
-      const receiptFile = find(unzippedFiles, (o) => o.type === 'receipt');
-
-      if (!receiptFile) {
-        return this.sendExpenditureError(false, 500, null, {
-          message: 'The receipt file could not be parsed',
-        });
-      }
-
-      const receiptUploaded = await uploadToS3(
-        `receipts/${receiptFile.hash}.pdf`,
-        readFileSync(`${unzipFileRes.tmpDirPath}/${receiptFile.name}`)
-      );
-
-      if (!receiptUploaded) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'The receipt could not be uploaded to S3',
-        });
-      }
-
-      const vimeoRes = await new Vimeo().upload(
-        `${unzipFileRes.tmpDirPath}/${videoFile.name}`,
-        `Standard Charity deploys ${numPlatesToFloating(
-          this.expenditurePlatesDeployed.toString()
-        )} plates of food`
-      );
-
-      if (vimeoRes.error || !vimeoRes.uri) {
-        return this.sendResponse(false, 500, null, {
-          message: vimeoRes.error || 'The video could not be uploaded to Vimeo',
-        });
-      }
-
-      const contractBalance = await this.redis.getStandardCharityContractBalance();
-
-      if (new BN(contractBalance).sub(this.expenditureWei).lt(new BN(0))) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'You may not expend more than the balance of the contract',
-        });
-      }
-
-      const expenditureCreated = await this.infura.createExpenditure(
-        videoFile.hash.toString(),
-        receiptFile.hash.toString(),
-        this.expenditureUsd,
-        this.expenditureWei,
-        this.expenditurePlatesDeployed
-      );
-
-      console.log('expenditureCreated:', expenditureCreated);
-
-      const videoUrlParts = vimeoRes.uri.split('/');
-
-      if (!expenditureCreated) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'The expenditure could not be created via Infura',
-        });
-      }
-
-      await this.deleteAllTempFiles();
-
       return this.sendResponse(
         true,
         200,
         {
-          videoHash: videoFile.hash.toString(),
-          vimeoUrl: `https://vimeo.com/${
-            videoUrlParts[videoUrlParts.length - 1]
-          }`,
+          // videoHash: videoFile.hash.toString(),
+          // vimeoUrl: `https://vimeo.com/${
+          //   videoUrlParts[videoUrlParts.length - 1]
+          // }`,
         },
         null
       );
+
+      // if (await this.redis.getIsCreatingExpenditure()) {
+      //   return this.sendResponse(false, 400, null, {
+      //     message:
+      //       'The system is processing a previous expenditure. Please try again in a few minutes.',
+      //   });
+      // }
+
+      // if (await this.redis.getIsCreatingRefunds()) {
+      //   return this.sendResponse(false, 400, null, {
+      //     message:
+      //       'The system is processing refunds. Please try again in a few minutes.',
+      //   });
+      // }
+
+      // await this.redis.setIsCreatingExpenditure(true);
+
+      // const { files } = this.req;
+
+      // if (!files || Object.keys(files).length === 0) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'No files were included with the request',
+      //   });
+      // }
+
+      // const params: IRequestBody = this.req.query;
+
+      // if (!params.message) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'Param message was not included in request',
+      //   });
+      // }
+
+      // if (!params.signature) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'Param signature was not included in request',
+      //   });
+      // }
+
+      // if (!config.ethereum.wallet) {
+      //   return this.sendExpenditureError(false, 500, null, {
+      //     message:
+      //       'There was a server error while creating expenditure: could not get ETH wallet',
+      //   });
+      // }
+
+      // const isVerified = isMessageVerified(
+      //   params.message,
+      //   params.signature,
+      //   config.ethereum.wallet.address
+      // );
+
+      // if (!isVerified) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message:
+      //       'The message and signature provided could not be verified. Only the address of the contract owner can be used to sign the message.',
+      //   });
+      // }
+
+      // let parsedMessage: IRequestMessage | null = null;
+
+      // try {
+      //   parsedMessage = JSON.parse(params.message);
+      // } catch (e) {
+      //   console.log('parse message error in CreateExpenditure:', e);
+      // }
+
+      // if (!parsedMessage) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'The message provided in the request could not be parsed',
+      //   });
+      // }
+
+      // if (
+      //   !parsedMessage.platesDeployed ||
+      //   isNaN(Number(parsedMessage.platesDeployed))
+      // ) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message:
+      //       'The platesDeployed value in the message was not provided or was invalid',
+      //   });
+      // }
+
+      // this.expenditurePlatesDeployed = Number(parsedMessage.platesDeployed);
+
+      // if (!parsedMessage.usd || isNaN(Number(parsedMessage.usd))) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'The usd in the message was not provided or was invalid',
+      //   });
+      // }
+
+      // this.expenditureUsd = Number(parsedMessage.usd);
+
+      // const videoAndReceiptFile: any = files.videoAndReceipt;
+
+      // if (!videoAndReceiptFile || !videoAndReceiptFile.tempFilePath) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message:
+      //       'A zipped file named videoAndReceipt that contains a video file and receipt PDF must be included in the request',
+      //   });
+      // }
+
+      // const ethPrice = await new CoinGecko().getEthPrice();
+
+      // if (!ethPrice) {
+      //   return this.sendExpenditureError(false, 500, null, {
+      //     message:
+      //       'A server error occured while creating the expenditure. Could not get the ETH price.',
+      //   });
+      // }
+
+      // const ethExpended = this.expenditureUsd / 100 / ethPrice;
+
+      // const expenditureWei = ethToWei(ethExpended.toString());
+
+      // if (!expenditureWei || !expenditureWei.toString()) {
+      //   return this.sendExpenditureError(false, 500, null, {
+      //     message:
+      //       'Could not convert ETH to wei for the purpose of creating the expenditure',
+      //   });
+      // }
+
+      // this.expenditureWei = expenditureWei;
+
+      // const unzipFileRes = await this.unzipFile(
+      //   videoAndReceiptFile.tempFilePath
+      // );
+
+      // if (typeof unzipFileRes === 'string') {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: unzipFileRes,
+      //   });
+      // }
+
+      // const { unzippedFiles } = unzipFileRes;
+
+      // if (!unzippedFiles) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'Could not unzip file to create expenditure',
+      //   });
+      // }
+
+      // const videoFile = find(unzippedFiles, (o) => o.type === 'video');
+
+      // if (!videoFile) {
+      //   return this.sendExpenditureError(false, 500, null, {
+      //     message: 'The video file could not be parsed',
+      //   });
+      // }
+
+      // const receiptFile = find(unzippedFiles, (o) => o.type === 'receipt');
+
+      // if (!receiptFile) {
+      //   return this.sendExpenditureError(false, 500, null, {
+      //     message: 'The receipt file could not be parsed',
+      //   });
+      // }
+
+      // const receiptUploaded = await uploadToS3(
+      //   `receipts/${receiptFile.hash}.pdf`,
+      //   readFileSync(`${unzipFileRes.tmpDirPath}/${receiptFile.name}`)
+      // );
+
+      // if (!receiptUploaded) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'The receipt could not be uploaded to S3',
+      //   });
+      // }
+
+      // const vimeoRes = await new Vimeo().upload(
+      //   `${unzipFileRes.tmpDirPath}/${videoFile.name}`,
+      //   `Standard Charity deploys ${numPlatesToFloating(
+      //     this.expenditurePlatesDeployed.toString()
+      //   )} plates of food`
+      // );
+
+      // if (vimeoRes.error || !vimeoRes.uri) {
+      //   return this.sendResponse(false, 500, null, {
+      //     message: vimeoRes.error || 'The video could not be uploaded to Vimeo',
+      //   });
+      // }
+
+      // const contractBalance = await this.redis.getStandardCharityContractBalance();
+
+      // if (new BN(contractBalance).sub(this.expenditureWei).lt(new BN(0))) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'You may not expend more than the balance of the contract',
+      //   });
+      // }
+
+      // const expenditureCreated = await this.infura.createExpenditure(
+      //   videoFile.hash.toString(),
+      //   receiptFile.hash.toString(),
+      //   this.expenditureUsd,
+      //   this.expenditureWei,
+      //   this.expenditurePlatesDeployed
+      // );
+
+      // console.log('expenditureCreated:', expenditureCreated);
+
+      // const videoUrlParts = vimeoRes.uri.split('/');
+
+      // if (!expenditureCreated) {
+      //   return this.sendExpenditureError(false, 400, null, {
+      //     message: 'The expenditure could not be created via Infura',
+      //   });
+      // }
+
+      // await this.deleteAllTempFiles();
+
+      // return this.sendResponse(
+      //   true,
+      //   200,
+      //   {
+      //     videoHash: videoFile.hash.toString(),
+      //     vimeoUrl: `https://vimeo.com/${
+      //       videoUrlParts[videoUrlParts.length - 1]
+      //     }`,
+      //   },
+      //   null
+      // );
     } catch (e) {
       console.log('CreateExpenditure error:', e);
 
