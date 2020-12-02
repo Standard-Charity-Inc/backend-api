@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.3] - 2020-12-11
+
+### Changed
+
+- Max upload file size
+
 ## [0.1.1] - 2020-10-23
 
 ### Added
