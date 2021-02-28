@@ -35,6 +35,7 @@ const maxUploadSizeMb = 995;
 app.use(
   fileUpload({
     limits: { fileSize: maxUploadSizeMb * 1024 * 1024 },
+    uploadTimeout: 3600000,
     useTempFiles: true,
     tempFileDir: `${__dirname}/routes/Expenditures/tmp`,
     debug: true,
