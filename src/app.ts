@@ -121,11 +121,13 @@ const startApp = () => {
 
     cronJob.start();
 
-    app.listen(config.port, () => {
+    const server = app.listen(config.port, () => {
       console.log(
         `Listening in the ${Config.env} environment on port ${config.port}`
       );
     });
+
+    server.headersTimeout = 3600000;
   });
 };
 
