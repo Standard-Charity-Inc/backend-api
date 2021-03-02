@@ -1,10 +1,6 @@
 import { Response } from 'express';
-import AdmZip from 'adm-zip';
-import shortUuid from 'short-uuid';
-import { extname, basename, join } from 'path';
-import { find, filter } from 'lodash';
-import * as xxhash from 'xxhash';
-import { readFileSync, unlink, readdir, lstatSync } from 'fs';
+import { join } from 'path';
+import { readFileSync, readdir, lstatSync } from 'fs';
 import BN from 'bn.js';
 import rimraf from 'rimraf';
 
@@ -15,22 +11,9 @@ import Infura from '../../Infura';
 import CoinGecko from '../../utils/CoinGecko';
 import Redis from '../../redis';
 import { uploadToS3 } from '../../utils/s3';
-import { deleteFile, numPlatesToFloating } from '../../utils';
-import Vimeo from '../../utils/Vimeo';
+import { deleteFile } from '../../utils';
 
 const config = Config[Config.env];
-
-interface IUnzippedFile {
-  name: string;
-  extension: string;
-  type: 'video' | 'receipt';
-  hash: number;
-}
-
-interface IUinzipFileRes {
-  unzippedFiles: IUnzippedFile[];
-  tmpDirPath: string;
-}
 
 interface IRequestBody {
   message?: string;
@@ -40,6 +23,8 @@ interface IRequestBody {
 interface IRequestMessage {
   platesDeployed: number;
   usd: string;
+  pdfHash: string;
+  videoHash: string;
 }
 
 class CreateExpenditure extends StandardRoute {
@@ -147,6 +132,18 @@ class CreateExpenditure extends StandardRoute {
 
       this.expenditureUsd = Number(parsedMessage.usd);
 
+      if (!parsedMessage.pdfHash) {
+        return this.sendExpenditureError(false, 400, null, {
+          message: 'The PDF hash must be provided',
+        });
+      }
+
+      if (!parsedMessage.videoHash) {
+        return this.sendExpenditureError(false, 400, null, {
+          message: 'The video hash must be provided',
+        });
+      }
+
       const videoAndReceiptFile: any = files.videoAndReceipt;
 
       if (!videoAndReceiptFile || !videoAndReceiptFile.tempFilePath) {
@@ -178,61 +175,14 @@ class CreateExpenditure extends StandardRoute {
 
       this.expenditureWei = expenditureWei;
 
-      const unzipFileRes = await this.unzipFile(
-        videoAndReceiptFile.tempFilePath
-      );
-
-      if (typeof unzipFileRes === 'string') {
-        return this.sendExpenditureError(false, 400, null, {
-          message: unzipFileRes,
-        });
-      }
-
-      const { unzippedFiles } = unzipFileRes;
-
-      if (!unzippedFiles) {
-        return this.sendExpenditureError(false, 400, null, {
-          message: 'Could not unzip file to create expenditure',
-        });
-      }
-
-      const videoFile = find(unzippedFiles, (o) => o.type === 'video');
-
-      if (!videoFile) {
-        return this.sendExpenditureError(false, 500, null, {
-          message: 'The video file could not be parsed',
-        });
-      }
-
-      const receiptFile = find(unzippedFiles, (o) => o.type === 'receipt');
-
-      if (!receiptFile) {
-        return this.sendExpenditureError(false, 500, null, {
-          message: 'The receipt file could not be parsed',
-        });
-      }
-
       const receiptUploaded = await uploadToS3(
-        `receipts/${receiptFile.hash}.pdf`,
-        readFileSync(`${unzipFileRes.tmpDirPath}/${receiptFile.name}`)
+        `receipts/${parsedMessage.pdfHash}.pdf`,
+        readFileSync(videoAndReceiptFile.tempFilePath)
       );
 
       if (!receiptUploaded) {
         return this.sendExpenditureError(false, 400, null, {
           message: 'The receipt could not be uploaded to S3',
-        });
-      }
-
-      const vimeoRes = await new Vimeo().upload(
-        `${unzipFileRes.tmpDirPath}/${videoFile.name}`,
-        `Standard Charity deploys ${numPlatesToFloating(
-          this.expenditurePlatesDeployed.toString()
-        )} plates of food`
-      );
-
-      if (vimeoRes.error || !vimeoRes.uri) {
-        return this.sendResponse(false, 500, null, {
-          message: vimeoRes.error || 'The video could not be uploaded to Vimeo',
         });
       }
 
@@ -245,16 +195,14 @@ class CreateExpenditure extends StandardRoute {
       }
 
       const expenditureCreated = await this.infura.createExpenditure(
-        videoFile.hash.toString(),
-        receiptFile.hash.toString(),
+        parsedMessage.videoHash,
+        parsedMessage.pdfHash,
         this.expenditureUsd,
         this.expenditureWei,
         this.expenditurePlatesDeployed
       );
 
       console.log('expenditureCreated:', expenditureCreated);
-
-      const videoUrlParts = vimeoRes.uri.split('/');
 
       if (!expenditureCreated) {
         return this.sendExpenditureError(false, 400, null, {
@@ -268,10 +216,8 @@ class CreateExpenditure extends StandardRoute {
         true,
         200,
         {
-          videoHash: videoFile.hash.toString(),
-          vimeoUrl: `https://vimeo.com/${
-            videoUrlParts[videoUrlParts.length - 1]
-          }`,
+          videoHash: parsedMessage.videoHash,
+          vimeoUrl: `https://vimeo.com/${parsedMessage.videoHash}`,
         },
         null
       );
@@ -282,96 +228,6 @@ class CreateExpenditure extends StandardRoute {
         message: 'There expenditure could not be created',
       });
     }
-  };
-
-  unzipFile = async (path: string): Promise<IUinzipFileRes | string> => {
-    const acceptableVideoExts = ['.mp4', '.mov', '.wmv', '.avi', '.flv'];
-
-    try {
-      const zip = new AdmZip(path);
-
-      const zipEntries = zip.getEntries();
-
-      const unzippedFiles: IUnzippedFile[] = [];
-
-      const acceptableFileExts = [...acceptableVideoExts, '.pdf'];
-
-      const tmpDirPath = `${__dirname}/tmp/${shortUuid.generate()}`;
-
-      zip.extractAllTo(tmpDirPath);
-
-      zipEntries.map(async (zipEntry) => {
-        if (basename(zipEntry.entryName).startsWith('.')) {
-          return;
-        }
-
-        const extension = extname(zipEntry.entryName).toLowerCase();
-
-        if (!acceptableFileExts.includes(extension)) {
-          return;
-        }
-
-        const file = readFileSync(`${tmpDirPath}/${zipEntry.entryName}`);
-
-        unzippedFiles.push({
-          name: zipEntry.entryName,
-          extension: extname(zipEntry.entryName),
-          type: acceptableVideoExts.includes(extension) ? 'video' : 'receipt',
-          hash: xxhash.hash(file, 0xcafebabe),
-        });
-      });
-
-      if (!find(unzippedFiles, (o) => o.type === 'video')) {
-        return this.returnUnzipError(
-          `Zip file does not include a video file of acceptable format. Acceptable formats are: ${acceptableVideoExts.join(
-            ', '
-          )}`
-        );
-      }
-
-      if (!find(unzippedFiles, (o) => o.type === 'receipt')) {
-        return this.returnUnzipError(
-          'Zip file does not include a receipt file in PDF format'
-        );
-      }
-
-      if (filter(unzippedFiles, (o) => o.type === 'video').length > 1) {
-        return this.returnUnzipError(
-          'Only one video file may be included in the zip file'
-        );
-      }
-
-      if (filter(unzippedFiles, (o) => o.type === 'receipt').length > 1) {
-        return this.returnUnzipError(
-          'Only one receipt file may be included in the zip file'
-        );
-      }
-
-      if (filter(unzippedFiles, (o) => !o.hash).length > 0) {
-        return this.returnUnzipError(
-          'Could get get the hash of one or more files from the zip file'
-        );
-      }
-
-      return {
-        unzippedFiles,
-        tmpDirPath,
-      };
-    } catch (e) {
-      console.log('unzipFile error:', e);
-
-      return this.returnUnzipError(
-        `File included in request could not be unzipped. Be sure to include a zip file with two files included: a video file (in one of ${acceptableVideoExts.join(
-          ', '
-        )} format) and a receipt file (in PDF format)`
-      );
-    }
-  };
-
-  returnUnzipError = (error: string): string => {
-    console.log('error:', error);
-
-    return error;
   };
 
   deleteDirectory = async (path: string): Promise<void> => {
@@ -409,7 +265,7 @@ class CreateExpenditure extends StandardRoute {
                   await deleteFile(path);
                 }
 
-                res();
+                res(null);
               });
             })
           );

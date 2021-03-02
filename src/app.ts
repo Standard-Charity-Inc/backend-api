@@ -19,7 +19,7 @@ import { receipts } from './routes/Receipts';
 import { marketing } from './routes/Marketing';
 import { contract } from './routes/Contract';
 import { IResponse } from './routes/StandardRoute';
-import CheckForRefunds from './routes/Refunds/CheckForRefunds';
+// import CheckForRefunds from './routes/Refunds/CheckForRefunds';
 
 const config = Config[Config.env];
 
@@ -64,14 +64,14 @@ app.use('/receipts', receipts);
 app.use('/marketing', marketing);
 app.use('/contract', contract);
 
-let cronJob: CronJob | null = null;
+// let cronJob: CronJob | null = null;
 
 const restartApp = (reason: string, timeoutSeconds: number) => {
-  if (cronJob) {
-    cronJob.stop();
+  // if (cronJob) {
+  //   cronJob.stop();
 
-    cronJob = null;
-  }
+  //   cronJob = null;
+  // }
 
   console.log(
     `The API will restart in ${timeoutSeconds} seconds. Reason: ${reason}`
@@ -109,17 +109,17 @@ const startApp = () => {
 
     await new Redis().fillCache();
 
-    cronJob = new CronJob(
-      '0 4 * * *',
-      function () {
-        new CheckForRefunds().init();
-      },
-      null,
-      true,
-      'America/New_York'
-    );
+    // cronJob = new CronJob(
+    //   '0 4 * * *',
+    //   function () {
+    //     new CheckForRefunds().init();
+    //   },
+    //   null,
+    //   true,
+    //   'America/New_York'
+    // );
 
-    cronJob.start();
+    // cronJob.start();
 
     const server = app.listen(config.port, () => {
       console.log(
