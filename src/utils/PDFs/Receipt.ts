@@ -20,7 +20,7 @@ import { deleteFile } from '..';
 const config = Config[Config.env];
 
 class Receipt {
-  dollars: number;
+  dollars: number | string;
   beginTimestamp: number;
   endTimestamp: number;
   walletAddress: string;
@@ -35,7 +35,7 @@ class Receipt {
    * @param donorName Name of donor
    */
   constructor(
-    dollars: number,
+    dollars: number | string,
     beginTimestamp: number,
     endTimestamp: number,
     walletAddress: string,
@@ -149,7 +149,7 @@ class Receipt {
                 // @ts-ignore
                 fonts.OpenSans[fontFamilyName] = path;
 
-                res();
+                res(null);
               });
             })
           );

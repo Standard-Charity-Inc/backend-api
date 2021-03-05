@@ -83,9 +83,9 @@ class GetReceipt extends StandardRoute {
         maximumFractionDigits: 2,
       });
 
-      const dollars = Number(
-        formatter.format(totalCentsExpended / 100).replace('$', '')
-      );
+      const dollars = formatter
+        .format(totalCentsExpended / 100)
+        .replace('$', '');
 
       const url = await new Receipt(
         dollars,

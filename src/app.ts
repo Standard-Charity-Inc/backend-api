@@ -5,7 +5,7 @@ import * as bodyParser from 'body-parser';
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import AWS from 'aws-sdk';
-import { CronJob } from 'cron';
+// import { CronJob } from 'cron';
 import cors from 'cors';
 
 import Config from './config';
