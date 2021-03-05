@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.4] - 2021-03-05
+
+### Changed
+
+- Removed automated deployments
+
 ## [0.1.3] - 2020-12-11
 
 ### Changed
