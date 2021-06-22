@@ -208,28 +208,37 @@ class StandardCharityContractFunctions extends ABI {
     data: string
   ): Promise<number | null> => {
     try {
+      const body = {
+        jsonrpc: '2.0',
+        method: 'eth_estimateGas',
+        params: [
+          {
+            from,
+            to,
+            gasPrice: `0x${Number(gasPrice).toString(16)}`,
+            value: `0x${Number(value).toString(16)}`,
+            data,
+          },
+        ],
+        id: Math.floor(Math.random() * Math.floor(9999999)),
+      };
+
+      console.log('estimateGas body:', body);
+
       const res = await superagent
         .post(`${config.infura.endpoint}`)
         .set({
           'Content-Type': 'application/json',
         })
-        .send({
-          jsonrpc: '2.0',
-          method: 'eth_estimateGas',
-          params: [
-            {
-              from,
-              to,
-              gasPrice: `0x${Number(gasPrice).toString(16)}`,
-              value: `0x${Number(value).toString(16)}`,
-              data,
-            },
-          ],
-          id: Math.floor(Math.random() * Math.floor(9999999)),
-        });
+        .send(body);
+
+      console.log('estimateGas res:', res);
 
       if (res && res.body && res.body.result) {
-        return parseInt(res.body.result, 16);
+        const estimate = parseInt(res.body.result, 16);
+
+        console.log('estimate:', estimate);
+        // return parseInt(res.body.result, 16);
       }
 
       return null;
