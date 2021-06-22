@@ -237,8 +237,9 @@ class StandardCharityContractFunctions extends ABI {
       if (res && res.body && res.body.result) {
         const estimate = parseInt(res.body.result, 16);
 
-        console.log('estimate:', estimate);
-        // return parseInt(res.body.result, 16);
+        console.log('gas estimate:', estimate);
+
+        return parseInt(res.body.result, 16);
       }
 
       return null;
