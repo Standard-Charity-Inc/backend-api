@@ -43,6 +43,12 @@ interface IPlatform {
       name: string;
     };
   };
+  blocknative: {
+    api: {
+      url: string;
+      key: string;
+    };
+  };
 }
 
 interface IConfig {
@@ -113,6 +119,12 @@ const config: IConfig = {
         name: process.env.MAILCHIMP_LIST_NAME_DEV as string,
       },
     },
+    blocknative: {
+      api: {
+        url: 'https://api.blocknative.com',
+        key: process.env.BLOCKNATIVE_API_KEY_DEV as string,
+      },
+    },
   },
   prod: {
     port: 3002,
@@ -164,6 +176,12 @@ const config: IConfig = {
       },
       list: {
         name: process.env.MAILCHIMP_LIST_NAME_PROD as string,
+      },
+    },
+    blocknative: {
+      api: {
+        url: 'https://api.blocknative.com',
+        key: process.env.BLOCKNATIVE_API_KEY_PROD as string,
       },
     },
   },

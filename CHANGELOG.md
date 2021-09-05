@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.2.0] - 2021-09-05
+
+### Changed
+
+- London fork upgrades
+
 ## [0.1.4] - 2021-03-05
 
 ### Changed

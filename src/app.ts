@@ -18,6 +18,7 @@ import { expendedDonations } from './routes/ExpendedDonations';
 import { receipts } from './routes/Receipts';
 import { marketing } from './routes/Marketing';
 import { contract } from './routes/Contract';
+import { utils } from './routes/Utils';
 import { IResponse } from './routes/StandardRoute';
 // import CheckForRefunds from './routes/Refunds/CheckForRefunds';
 
@@ -63,6 +64,7 @@ app.use('/expendedDonations', expendedDonations);
 app.use('/receipts', receipts);
 app.use('/marketing', marketing);
 app.use('/contract', contract);
+app.use('/utils', utils);
 
 // let cronJob: CronJob | null = null;
 

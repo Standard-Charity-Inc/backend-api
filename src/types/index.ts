@@ -89,3 +89,32 @@ export interface IPendingRefund {
   donationNumber: number;
   valueETHToRefund: string;
 }
+
+export interface IBlocknativeBlockPrices {
+  system: string;
+  network: string;
+  unit: string;
+  maxPrice: number;
+  currentBlockNumber: number;
+  msSinceLastBlock: number;
+  blockPrices: IBlocknativeBlockPricesBlock[];
+}
+
+export interface IBlocknativeBlockPricesBlock {
+  blockNumber: number;
+  baseFeePerGas: number;
+  estimatedTransactionCount: number;
+  estimatedPrices: IBlocknativeBlockPricesEsimate[];
+}
+
+export interface IBlocknativeBlockPricesEsimate {
+  confidence: 70 | 80 | 90 | 95 | 99;
+  price: number;
+  maxPriorityFeePerGas: number;
+  maxFeePerGas: number;
+}
+
+export interface IEIP1559Gas {
+  maxPriorityFeePerGas: string;
+  maxFeePerGas: string;
+}

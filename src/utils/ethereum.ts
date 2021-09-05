@@ -91,3 +91,13 @@ export const ethToWei = (eth: string): BN | null => {
     return null;
   }
 };
+
+export const gweiToWei = (gwei: string): string | null => {
+  try {
+    return new Web3().utils.toWei(gwei, 'Gwei');
+  } catch (e) {
+    console.log('gweiToWei error:', e);
+
+    return null;
+  }
+};
